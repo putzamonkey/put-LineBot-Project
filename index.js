@@ -27,31 +27,86 @@ const client = new line.Client(config);
 
 async function handleEvents(event) {
 
-    if (event.message.type == 'image') {
-
-        if(event.message.contentProvider.type === 'line'){
-            const dlpath = path.join(__dirname, 'download', `${event.message.id}.jpg`)
-
-            await downloadcontent(event.message.id, dlpath)
-
-            return client.replyMessage(event.replyToken, [
-                {
-                    "type": "text",
-                    "text": `Download complete`,
-                    "quoteToken": event.message.quoteToken
-                }
-            ])
-        }
-        
-    } else {
+    if (event.type === 'postback'){
 
         return client.replyMessage(event.replyToken, [
             {
                 "type": "text",
-                "text": `รับข้อมูลแล้ว`,
-                "quoteToken": event.message.quoteToken
+                "text": `DATA = ${event.postback.data}`,
             }
         ])
+
+    } else {
+
+        if (event.message.type == 'image') {
+
+            if(event.message.contentProvider.type === 'line'){
+                const dlpath = path.join(__dirname, 'download', `${event.message.id}.jpg`)
+
+                await downloadcontent(event.message.id, dlpath)
+
+                return client.replyMessage(event.replyToken, [
+                    {
+                        "type": "text",
+                        "text": `Download complete`,
+                        "quoteToken": event.message.quoteToken
+                    }
+                ])
+            }
+            
+        } else {
+
+            return client.replyMessage(event.replyToken, [
+                {
+                    "type": "text",
+                    "text": `รับข้อมูลแล้ว`,
+                    "quickReply": {
+                        "items": [
+                            // {
+                            //     "type": "action",
+                            //     "action": {
+                            //         "type": "message",
+                            //         "label": "Yes",
+                            //         "text": "Niga"
+                            //     }
+                            // },
+                            // {
+                            //     "type": "action",
+                            //     "action": {
+                            //         "type": "message",
+                            //         "label": "No",
+                            //         "text": "No Niga"
+                            //     }
+                            // },
+                            // {
+                            //     "type": "action",
+                            //     "action": {
+                            //         "type": "uri",
+                            //         "label": "Go google",
+                            //         "uri": "https://www.google.com"
+                            //     }
+                            // },
+                            {
+                                "type": "action",
+                                "action": {
+                                    "type": "postback",
+                                    "data": "NWORD007",
+                                    "label": "Detail",
+                                    // "text" : "CLICK NWORD007"
+                                }
+                            },
+                            {
+                                "type": "action",
+                                "action": {
+                                    "type": "camera",
+                                    "label": "open camera",
+                                }
+                            }
+                        ]
+                    }
+                }
+            ])
+        }
     }
 
 
