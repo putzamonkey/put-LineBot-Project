@@ -1,0 +1,59 @@
+{
+  "size": {
+    "width": 2500,
+    "height": 1686
+  },
+  "selected": true,
+  "name": "Setting Pre-set",
+  "chatBarText": "EiEi",
+  "areas": [
+    {
+      "bounds": {
+        "x": 0,
+        "y": 0,
+        "width": 1219,
+        "height": 874
+      },
+      "action": {
+        "type": "message",
+        "text": "test set 1"
+      }
+    },
+    {
+      "bounds": {
+        "x": 1217,
+        "y": 0,
+        "width": 1279,
+        "height": 874
+      },
+      "action": {
+        "type": "message",
+        "text": "test set 2"
+      }
+    },
+    {
+      "bounds": {
+        "x": 0,
+        "y": 867,
+        "width": 1224,
+        "height": 819
+      },
+      "action": {
+        "type": "message",
+        "text": "test set 3"
+      }
+    },
+    {
+      "bounds": {
+        "x": 1221,
+        "y": 872,
+        "width": 1279,
+        "height": 814
+      },
+      "action": {
+        "type": "message",
+        "text": "test set 4"
+      }
+    }
+  ]
+}

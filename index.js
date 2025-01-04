@@ -27,6 +27,18 @@ app.post('/webhook', line.middleware(config), (req, res) => {
         .then((result) => res.json(result))
 });
 
+// Link Rich Menu to a User
+async function linkRichMenu(userId) {
+    const richMenuId = "YOUR_RICH_MENU_ID"; // Replace with your Rich Menu ID
+    const channelToken = process.env.token;
+
+    await axios.post(`https://api.line.me/v2/bot/user/${userId}/richmenu/${richMenuId}`, null, {
+        headers: {
+            "Authorization": `Bearer ${channelToken}`
+        }
+    });
+}
+
 const client = new line.Client(config);
 
 async function handleEvents(event) {
@@ -84,7 +96,9 @@ async function handleEvents(event) {
     ]);
     
 
-    } else if (event.type === 'postback'){
+    } else 
+    
+    if (event.type === 'postback'){
         const data = event.postback.data;
        
         if (data.startsWith("fps:")) {
@@ -150,7 +164,7 @@ async function handleEvents(event) {
             return client.replyMessage(event.replyToken, [
                 {
                     "type": "text",
-                    "text": `รับข้อมูลแล้ว`,
+                    "text": `Invalid input. Here are some options to get started:`,
                     "quickReply": {
                         "items": [
                             {
@@ -169,39 +183,22 @@ async function handleEvents(event) {
                                     "data": "resolution:1080p"
                                 }
                             },
-                            // {
-                            //     "type": "action",
-                            //     "action": {
-                            //         "type": "uri",
-                            //         "label": "Go google",
-                            //         "uri": "https://www.google.com"
-                            //     }
-                            // },
-                            // {
-                            //     "type": "action",
-                            //     "action": {
-                            //         "type": "postback",
-                            //         "data": "NWORD007",
-                            //         "label": "Detail",
-                            //         "text" : "CLICK NWORD007"
-                            //     }
-                            // },
-                            // {
-                            //     "type": "action",
-                            //     "action": {
-                            //         "type": "postback",
-                            //         "data": "NWORD007",
-                            //         "label": "Detail",
-                            //         "text" : "CLICK NWORD007"
-                            //     }
-                            // },
-                            // {
-                            //     "type": "action",
-                            //     "action": {
-                            //         "type": "camera",
-                            //         "label": "open camera",
-                            //     }
-                            // }
+                            {
+                                "type": "action",
+                                "action": {
+                                    "type": "postback",
+                                    "label": "Show Current Settings",
+                                    "data": "showData"
+                                }
+                            },
+                            {
+                                "type": "action",
+                                "action": {
+                                    "type": "postback",
+                                    "label": "Reset Configuration",
+                                    "data": "setNull"
+                                }
+                            }
                         ]
                     }
                 }
