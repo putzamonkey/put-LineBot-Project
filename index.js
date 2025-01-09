@@ -156,7 +156,7 @@ async function handleEvents(event) {
             }
         
         } else if (event.message.type === 'video') {
-            
+
             if (event.message.contentProvider.type === 'line') {
                 const dlpath = path.join(__dirname, 'download', `${event.message.id}.mp4`);
 
@@ -217,9 +217,6 @@ async function handleEvents(event) {
             ])
         }
     }
-
-
-    
 }
 
 async function downloadcontent(mid, downloadpath) {
