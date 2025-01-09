@@ -94,11 +94,8 @@ async function handleEvents(event) {
             "text": "Invalid input. Use 'fps:<value>' or 'resolution:<value>' to set FFmpeg configuration."
         }
     ]);
-    
 
-    } else 
-    
-    if (event.type === 'postback'){
+    } else if (event.type === 'postback'){
         const data = event.postback.data;
        
         if (data.startsWith("fps:")) {
@@ -152,14 +149,29 @@ async function handleEvents(event) {
                 return client.replyMessage(event.replyToken, [
                     {
                         "type": "text",
-                        "text": `Download complete`,
+                        "text": `Image Download complete`,
                         "quoteToken": event.message.quoteToken
                     }
                 ])
             }
+        
+        } else if (event.message.type === 'video') {
             
-        } 
-        else {
+            if (event.message.contentProvider.type === 'line') {
+                const dlpath = path.join(__dirname, 'download', `${event.message.id}.mp4`);
+
+                await downloadcontent(event.message.id, dlpath);
+
+                return client.replyMessage(event.replyToken, [
+                    {
+                        "type": "text",
+                        "text": `Video download complete`,
+                        "quoteToken": event.message.quoteToken
+                    }
+                ]);
+            }
+
+        } else {
 
             return client.replyMessage(event.replyToken, [
                 {
@@ -218,8 +230,6 @@ async function downloadcontent(mid, downloadpath) {
     const folder_download = fs.createWriteStream(downloadpath);
 
     await piplineSync(stream, folder_download);
-
-
 }
 
 app.get('/', (req, res) => {
