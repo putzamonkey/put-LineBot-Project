@@ -9,6 +9,8 @@ const fs = require('fs');
 const path = require('path');
 const { pipeline } = require('stream');
 
+require('./testscript.js');
+
 let ffmpegConfig = {
     fps: null,
     resolution: null
@@ -29,7 +31,7 @@ app.post('/webhook', line.middleware(config), (req, res) => {
 
 // Link Rich Menu to a User
 async function linkRichMenu(userId) {
-    const richMenuId = "YOUR_RICH_MENU_ID"; // Replace with your Rich Menu ID
+    const richMenuId = "richmenu-3216d55fcc0fe9a9f4efc05531091c32"; // Replace with your Rich Menu ID
     const channelToken = process.env.token;
 
     await axios.post(`https://api.line.me/v2/bot/user/${userId}/richmenu/${richMenuId}`, null, {
@@ -142,7 +144,7 @@ async function handleEvents(event) {
         if (event.message.type == 'image') {
 
             if(event.message.contentProvider.type === 'line'){
-                const dlpath = path.join(__dirname, 'download', `${event.message.id}.jpg`)
+                const dlpath = path.join(__dirname, 'download/images', `${event.message.id}.jpg`)
 
                 await downloadcontent(event.message.id, dlpath)
 
@@ -158,7 +160,7 @@ async function handleEvents(event) {
         } else if (event.message.type === 'video') {
 
             if (event.message.contentProvider.type === 'line') {
-                const dlpath = path.join(__dirname, 'download', `${event.message.id}.mp4`);
+                const dlpath = path.join(__dirname, 'download/videos', `${event.message.id}.mp4`);
 
                 await downloadcontent(event.message.id, dlpath);
 
