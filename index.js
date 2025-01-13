@@ -9,7 +9,7 @@ const fs = require('fs');
 const path = require('path');
 const { pipeline } = require('stream');
 
-require('./testscript.js');
+const testscript = require('./testscript');
 
 let ffmpegConfig = {
     fps: null,
@@ -75,6 +75,18 @@ async function handleEvents(event) {
                 {
                     "type": "text",
                     "text": `Current Configuration:\nFPS: ${ffmpegConfig.fps || 'Not set'}\nResolution: ${ffmpegConfig.resolution || 'Not set'}`
+                }
+            ]);
+        }
+
+        if (userMessage === "testScript") {
+            //const testFile = './sample.mp4';
+            const result = testscript.validateFile(testCases); // เรียกฟังก์ชัน validateExample
+
+            return client.replyMessage(event.replyToken, [
+                {
+                    type: "text",
+                    text: `Validation Result: ${result}`
                 }
             ]);
         }
