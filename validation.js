@@ -1,6 +1,5 @@
 const fs = require('fs');
 const mime = require('mime-types');
-const annihilateFile = require('./fileAnnihilator.js');
 
 /**
  * Validates the file type based on the file path.
@@ -33,8 +32,7 @@ function validateFile(filePath) {
         return false;
     }
 
-    // If not video or audio, remove that file, and return null
-    annihilateFile(filePath); // Delete the invalid file
+    // If not video or audio, return null
     return null;
 }
 
