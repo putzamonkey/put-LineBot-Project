@@ -23,12 +23,12 @@ function validateFile(filePath) {
     }
 
     // Check if the MIME type is video
-    if (mimeType.startsWith('videos/')) {
+    if (mimeType.startsWith('video/')) {
         return true;
     }
 
     // Check if the MIME type is audio
-    if (mimeType.startsWith('audios/')) {
+    if (mimeType.startsWith('audio/')) {
         return false;
     }
 
