@@ -10,6 +10,9 @@ const path = require('path');
 const { pipeline } = require('stream');
 
 const testscript = require('./testscript');
+const validateFiles = require('./fileValidator');
+const validateFile = require('./validation.js');
+
 
 let ffmpegConfig = {
     fps: null,
@@ -45,6 +48,7 @@ const client = new line.Client(config);
 
 async function handleEvents(event) {
     if (event.type === 'message' && event.message.type === 'text') {
+
         const userMessage = event.message.text;
 
         if (userMessage.startsWith("fps:")) {
@@ -79,16 +83,62 @@ async function handleEvents(event) {
             ]);
         }
 
-        if (userMessage === "testScript") {
-            //const testFile = './sample.mp4';
-            const result = testscript.validateFile(testCases); // เรียกฟังก์ชัน validateExample
+        if (userMessage === 'fileTests') {
+            try {
+                const testCases = [
+                    './download/videos/544192410276855861.mp4',
+                    './download/audios/544192426819715426.mp3',
+                    './download/images/544192391972913233.jpg',
+                ];
 
-            return client.replyMessage(event.replyToken, [
-                {
-                    type: "text",
-                    text: `Validation Result: ${result}`
-                }
-            ]);
+                // เรียกใช้ validateFiles เพื่อประมวลผล
+                const results = validateFiles(testCases);
+
+                return client.replyMessage(event.replyToken, [
+                    {
+                        type: 'text',
+                        text: results.join('\n') // รวมผลลัพธ์เป็นข้อความเดียว
+                    }
+                ]);
+            } catch (error) {
+                console.error('Error running tests:', error);
+                return client.replyMessage(event.replyToken, [
+                    {
+                        type: 'text',
+                        text: 'An error occurred while running the tests.'
+                    }
+                ]);
+            }
+        }
+
+        if (userMessage === 'deleteTests') {
+            try {
+                const testCases = [ // ตัวอย่าง test cases (คุณสามารถปรับเปลี่ยนได้)
+                    './download/videos/544192410276855861.mp4',
+                    './download/audios/544192426819715426.mp3',
+                    './download/images/544192391972913233.jpg',
+                ];
+
+                const results = testCases.map((filePath, index) => {
+                    const result = validateFile(filePath);
+                    return `Test Case ${index + 1}: ${filePath} => ${result === true ? 'Video' : result === false ? 'Audio' : 'Invalid'}`;
+                });
+
+                return client.replyMessage(event.replyToken, [
+                    {
+                        type: 'text',
+                        text: results.join('\n')
+                    }
+                ]);
+            } catch (error) {
+                console.error('Error running tests:', error);
+                return client.replyMessage(event.replyToken, [
+                    {
+                        type: 'text',
+                        text: 'An error occurred while running the tests.'
+                    }
+                ]);
+            }
         }
 
         if (userMessage === "setNull") {
@@ -185,6 +235,18 @@ async function handleEvents(event) {
                 ]);
             }
 
+        } else if (event.message.type === 'audio') {
+            if (event.message.contentProvider.type === 'line') {
+                const dlpath = path.join(__dirname, 'download/audios', `${event.message.id}.mp3`);
+                await downloadcontent(event.message.id, dlpath);
+                return client.replyMessage(event.replyToken, [
+                    {
+                        "type": "text",
+                        "text": `Audio download complete`,
+                        "quoteToken": event.message.quoteToken
+                    }
+                ]);
+            }
         } else {
 
             return client.replyMessage(event.replyToken, [
