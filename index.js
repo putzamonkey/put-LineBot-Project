@@ -86,9 +86,9 @@ async function handleEvents(event) {
         if (userMessage === 'fileTests') {
             try {
                 const testCases = [
-                    './download/videos/544192410276855861.mp4',
-                    './download/audios/544192426819715426.mp3',
-                    './download/images/544192391972913233.jpg',
+                    './download/video/544193701166711011.mp4',
+                    './download/audio/544193725040164901.mp3',
+                    './download/image/544193714571182305.jpg',
                 ];
 
                 // เรียกใช้ validateFiles เพื่อประมวลผล
@@ -114,9 +114,9 @@ async function handleEvents(event) {
         if (userMessage === 'deleteTests') {
             try {
                 const testCases = [ // ตัวอย่าง test cases (คุณสามารถปรับเปลี่ยนได้)
-                    './download/videos/544192410276855861.mp4',
-                    './download/audios/544192426819715426.mp3',
-                    './download/images/544192391972913233.jpg',
+                    './download/video/544193701166711011.mp4',
+                    './download/audio/544193725040164901.mp3',
+                    './download/image/544193714571182305.jpg',
                 ];
 
                 const results = testCases.map((filePath, index) => {

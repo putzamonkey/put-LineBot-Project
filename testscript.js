@@ -4,10 +4,9 @@ const validateFile = require('./validation.js'); // Import file validation modul
 
 // // Test cases (try with your own stuff)
 const testCases = [
-     //'./download/video.mp4', // video
-     //'./download/audio.mp3', // audio
-     //'./download/test.txt', // invalid file type
-     //'./download/missing_file.xxx' // file doesn't exist
+    './download/video/544193701166711011.mp4',
+    './download/audio/544193725040164901.mp3',
+    './download/image/544193714571182305.jpg',
 ];
 
 // Run each test case
