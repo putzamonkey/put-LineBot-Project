@@ -1,10 +1,10 @@
 // File validation examples
 
-const validateFile = require('./validation.js'); // Import file validation module
+const validateFile = require('./fileTypeValidation.js'); // Import file validation module
 
 // // Test cases (try with your own stuff)
 const testCases = [
-    './download/video/544193701166711011.mp4',
+    './download/video.mp4',
     './download/audio/544193725040164901.mp3',
     './download/image/544193714571182305.jpg',
 ];

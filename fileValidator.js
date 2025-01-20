@@ -1,4 +1,4 @@
-const validateFile = require('./validation.js'); 
+const validateFile = require('./fileTypeValidation.js'); 
 
 /**
  * 
