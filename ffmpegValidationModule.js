@@ -1,5 +1,5 @@
 /**
- * ffmpeg_validation_module.js
+ * ffmpegValidationModule.js
  *
  * This file contains all the logic for validating user inputs:
  *  - inputPath / videoOutput constraints

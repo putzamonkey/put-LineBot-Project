@@ -2,33 +2,33 @@
  * ffmpeg.js
  *
  * Demonstrates how you can:
- *  1) Import the validation logic from ffmpeg_validation_module.js
+ *  1) Import the validation logic from ffmpegValidationModule.js
  *  2) Validate user inputs
- *  3) Spawn the Python script (ffmpeg_processor.py)
+ *  3) Spawn the Python script (ffmpegProcessor.py)
  *  4) Return or log success/error
  *
  * USAGE:
  *   node ffmpeg.js
  *
- * Make sure ffmpeg_processor.py is in the same directory and is correct.
+ * Make sure ffmpegProcessor.py is in the same directory and is correct.
  */
 
 const { spawn } = require("child_process");
 const {
   buildValidatedParams,
   // you could also import the individual validators if you want step-by-step
-} = require("./ffmpeg_validation_module.js");
+} = require("./ffmpegValidationModule.js");
 
 /**
  * A) spawnPythonScript
- *    - Actually runs ffmpeg_processor.py with the validated params
+ *    - Actually runs ffmpegProcessor.py with the validated params
  */
 function spawnPythonScript(params) {
   return new Promise((resolve, reject) => {
     console.log("[JS] Spawning Python script with params:", params);
 
     // Launch the python script
-    const pythonProcess = spawn("python3", ["ffmpeg_processor.py"]);
+    const pythonProcess = spawn("python3", ["ffmpegProcessor.py"]);
 
     let stdoutData = "";
     let stderrData = "";
