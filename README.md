@@ -1,5 +1,7 @@
 # put-LineBot-Project
-อย่าลืมลง node.js ด้วย
+อย่าลืมลง node.js ,python, ffmpeg ด้วย
+
+pip install ffmpeg-python
 
 npm install express @line/bot-sdk dotenv --save
 npm install nodemon --save-dev
