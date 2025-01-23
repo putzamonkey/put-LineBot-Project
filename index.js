@@ -11,12 +11,13 @@ const { pipeline } = require('stream');
 
 const testscript = require('./testscript');
 const validateFiles = require('./fileValidator');
-const validateFile = require('./validation.js');
+const validateFile = require('./fileTypeValidation.js');
 
 
 let ffmpegConfig = {
     fps: null,
-    resolution: null
+    resolution: null,
+    quality: null
 };
 
 const config = {
@@ -73,31 +74,68 @@ async function handleEvents(event) {
                 }
             ]);
         }
-        
-        if (userMessage === "showData") {
+
+        if (userMessage.startsWith("quality:")) {
+            const qualityValue = userMessage.split(":")[1];
+            ffmpegConfig.quality= qualityValue;
             return client.replyMessage(event.replyToken, [
                 {
                     "type": "text",
-                    "text": `Current Configuration:\nFPS: ${ffmpegConfig.fps || 'Not set'}\nResolution: ${ffmpegConfig.resolution || 'Not set'}`
+                    "text": `Quality set to ${ffmpegConfig.quality}`
                 }
             ]);
         }
+        
+        if (userMessage === "showData") {
+            return showData(event);
+        }
+
+        if (userMessage === "test set 1") {
+            ffmpegConfig.fps = 30;
+            ffmpegConfig.resolution = "1280x720";
+            ffmpegConfig.quality = "low";
+            return showData(event);
+        }
+
+        if (userMessage === "test set 2") {
+            ffmpegConfig.fps = 60;
+            ffmpegConfig.resolution = "1980x1080";
+            ffmpegConfig.quality = "standard";
+            return showData(event);
+        }
+
+        if (userMessage === "test set 3") {
+            ffmpegConfig.fps = 60;
+            ffmpegConfig.resolution = "2560x1440";
+            ffmpegConfig.quality = "standard";
+            return showData(event);
+        }
+
+        if (userMessage === "test set 4") {
+            ffmpegConfig.fps = 60;
+            ffmpegConfig.resolution = "2560x1440";
+            ffmpegConfig.quality = "high";
+            return showData(event);
+        }
+
+
+
 
         if (userMessage === 'fileTests') {
             try {
                 const testCases = [
-                    './download/video/544193701166711011.mp4',
+                    './download/videogit/544193701166711011.mp4',
                     './download/audio/544193725040164901.mp3',
                     './download/image/544193714571182305.jpg',
                 ];
 
-                // เรียกใช้ validateFiles เพื่อประมวลผล
+                // เรียกใช้ validateFiles (ใน fileValidator)
                 const results = validateFiles(testCases);
 
                 return client.replyMessage(event.replyToken, [
                     {
                         type: 'text',
-                        text: results.join('\n') // รวมผลลัพธ์เป็นข้อความเดียว
+                        text: results.join('\n') 
                     }
                 ]);
             } catch (error) {
@@ -113,8 +151,8 @@ async function handleEvents(event) {
 
         if (userMessage === 'deleteTests') {
             try {
-                const testCases = [ // ตัวอย่าง test cases (คุณสามารถปรับเปลี่ยนได้)
-                    './download/video/544193701166711011.mp4',
+                const testCases = [ 
+                    './download/videogit/544193701166711011.mp4',
                     './download/audio/544193725040164901.mp3',
                     './download/image/544193714571182305.jpg',
                 ];
@@ -144,12 +182,8 @@ async function handleEvents(event) {
         if (userMessage === "setNull") {
             ffmpegConfig.fps = null;
             ffmpegConfig.resolution = null;
-            return client.replyMessage(event.replyToken, [
-                {
-                    "type": "text",
-                    "text": `Current Configuration:\nFPS: ${ffmpegConfig.fps || 'Not set'}\nResolution: ${ffmpegConfig.resolution || 'Not set'}`
-                }
-            ]);
+            ffmpegConfig.quality = null;
+            return showData(event);
         }
 
     return client.replyMessage(event.replyToken, [
@@ -206,7 +240,7 @@ async function handleEvents(event) {
         if (event.message.type == 'image') {
 
             if(event.message.contentProvider.type === 'line'){
-                const dlpath = path.join(__dirname, 'download/images', `${event.message.id}.jpg`)
+                const dlpath = path.join(__dirname, 'download/image', `${event.message.id}.jpg`)
 
                 await downloadcontent(event.message.id, dlpath)
 
@@ -222,7 +256,7 @@ async function handleEvents(event) {
         } else if (event.message.type === 'video') {
 
             if (event.message.contentProvider.type === 'line') {
-                const dlpath = path.join(__dirname, 'download/videos', `${event.message.id}.mp4`);
+                const dlpath = path.join(__dirname, 'download/video', `${event.message.id}.mp4`);
 
                 await downloadcontent(event.message.id, dlpath);
 
@@ -237,7 +271,7 @@ async function handleEvents(event) {
 
         } else if (event.message.type === 'audio') {
             if (event.message.contentProvider.type === 'line') {
-                const dlpath = path.join(__dirname, 'download/audios', `${event.message.id}.mp3`);
+                const dlpath = path.join(__dirname, 'download/audio', `${event.message.id}.mp3`);
                 await downloadcontent(event.message.id, dlpath);
                 return client.replyMessage(event.replyToken, [
                     {
@@ -293,6 +327,15 @@ async function handleEvents(event) {
             ])
         }
     }
+}
+
+function showData(event) {
+    return client.replyMessage(event.replyToken, [
+        {
+            "type": "text",
+            "text": `Current Configuration:\nFPS: ${ffmpegConfig.fps || 'Not set'}\nResolution: ${ffmpegConfig.resolution || 'Not set'}\nQuality: ${ffmpegConfig.quality || 'Not set'}`
+        }
+    ]);
 }
 
 async function downloadcontent(mid, downloadpath) {
