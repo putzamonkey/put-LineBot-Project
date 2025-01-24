@@ -47,12 +47,14 @@ function validateInputPath(inputPath, videoOutput) {
 
 /**
  * validateResolution
+ * - return { mode: "scale", value: 1 } if empty, basically assuming that user wants original resolution
  * - "WxH" or "W*H" => direct resolution => each dimension <= MAX_RESOLUTION
  * - Positive float => scale factor <= 1 => no upscaling
  */
 function validateResolution(resolutionStr) {
-  if (!resolutionStr || resolutionStr.trim() === "") {
-    throw new Error("Resolution cannot be empty for video output.");
+  // If the input is 0, empty, or undefined, assume original resolution
+  if (!resolutionStr || resolutionStr.trim() === "" || resolutionStr === "0") {
+    return { mode: "scale", value: 1 }; // Original resolution
   }
 
   // 1) Check "WxH" or "W*H"
@@ -74,7 +76,7 @@ function validateResolution(resolutionStr) {
     return { mode: "resolution", width, height };
   }
 
-  // 2) Otherwise, check if it's a positive float => scale factor
+  // 2) Check if it's a positive float => scale factor
   const floatPattern = /^[0-9]*\.?[0-9]+$/;
   if (floatPattern.test(resolutionStr)) {
     const scaleVal = parseFloat(resolutionStr);

@@ -26,18 +26,26 @@ def probe_video_info(path):
         sys.stderr.write(f"[Python] ffmpeg.probe failed: {str(e)}\n")
         return None
 
-def generate_output_filename(input_path, extension):
+def generate_output_filename(input_path, extension, is_video):
     """
-    Puts the processed file into ./processed_media/.
+    Generates the output file path in the appropriate subfolder based on output type.
 
     Example:
       input_path = './download/video.mp4'
-      => './processed_media/video_processed.mkv'
-         (if extension='.mkv')
+      is_video = True
+      => './processed_media/video/video_processed.mkv'
+
+      input_path = './download/audio.mp3'
+      is_video = False
+      => './processed_media/audio/audio_processed.mp3'
     """
-    os.makedirs("processed_media", exist_ok=True)
+    subfolder = "video" if is_video else "audio"
+    output_dir = os.path.join("processed_media", subfolder)
+    os.makedirs(output_dir, exist_ok=True)
+
     base_name = os.path.splitext(os.path.basename(input_path))[0]
-    return os.path.join("processed_media", f"{base_name}_processed{extension}")
+    return os.path.join(output_dir, f"{base_name}_processed{extension}")
+
 
 def main():
     raw_in = sys.stdin.read().strip()
@@ -62,7 +70,7 @@ def main():
         print(json.dumps({"error": "inputPath is required"}))
         sys.exit(1)
 
-    output_path = generate_output_filename(input_path, output_format)
+    output_path = generate_output_filename(input_path, output_format, video_output)
 
     # -----------------------------------
     # AUDIO-ONLY MODE (videoOutput=false)
@@ -71,23 +79,21 @@ def main():
         sys.stderr.write("[Python] Processing audio only...\n")
 
         # "low" => 128k
-        # "standard" => 320k
-        # "high" => copy the original audio
+        # "standard" => 256k
+        # "high" => 320k
         audio_bitrate = None
-        audio_copy = False
+
         if quality == "low":
             audio_bitrate = "128k"
         elif quality == "standard":
-            audio_bitrate = "320k"
+            audio_bitrate = "256k"
         elif quality == "high":
-            audio_copy = True
+            audio_bitrate = "320k"
 
         try:
             inp = ffmpeg.input(input_path)
-            if audio_copy:
-                out = inp.output(output_path, c="copy", vn=None)
-            else:
-                out = inp.output(output_path, audio_bitrate=audio_bitrate, vn=None)
+            # Always encode with the chosen bitrate
+            out = inp.output(output_path, audio_bitrate=audio_bitrate, vn=None)
 
             ffmpeg.run(out, overwrite_output=True)
             print(json.dumps({"processedFilePath": output_path}))
