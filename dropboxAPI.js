@@ -1,6 +1,6 @@
 const Dropbox = require('dropbox').Dropbox;
 const fetch = require('node-fetch'); // Ensure fetch is available
-require('dotenv').config({ path: './.env.tokens' }); // Load environment variables
+require('dotenv').config(); // Load environment variables
 
 const dropboxAPI = {
   async uploadToDropbox(filePath, dropboxPath) {
