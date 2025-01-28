@@ -1,3 +1,4 @@
 download/
 .env
 node_modules/
+processed_media/
