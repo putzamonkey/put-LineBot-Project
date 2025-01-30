@@ -1,6 +1,7 @@
 const Dropbox = require('dropbox').Dropbox;
-const fetch = require('node-fetch'); // Ensure fetch is available
-require('dotenv').config(); // Load environment variables
+const fetch = require('node-fetch');
+const path = require('path');
+require('dotenv').config();
 
 const dropboxAPI = {
   async uploadToDropbox(filePath, dropboxPath) {
@@ -13,26 +14,27 @@ const dropboxAPI = {
     const dbx = new Dropbox({ accessToken: dropboxToken, fetch });
 
     try {
-      // Clean up old files
-      const folderPath = dropboxPath.substring(0, dropboxPath.lastIndexOf('/')) || '/'; // Get the folder path
-      console.log(`[DropboxAPI] Checking for old files in folder: ${folderPath}`);
+      // Normalize file paths for cross-platform compatibility
+      filePath = path.normalize(filePath).replace(/\\/g, "/");
+      dropboxPath = path.normalize(dropboxPath).replace(/\\/g, "/");
 
-      const listResponse = await dbx.filesListFolder({ path: folderPath });
-      const now = new Date();
+      // Extract folder path and ensure it exists
+      const folderPath = dropboxPath.substring(0, dropboxPath.lastIndexOf('/')) || '/';
+      console.log(`[DropboxAPI] Ensuring folder exists: ${folderPath}`);
 
-      for (const entry of listResponse.result.entries) {
-        if (entry['.tag'] === 'file') {
-          const fileModifiedTime = new Date(entry.client_modified);
-          const timeDifference = (now - fileModifiedTime) / (1000 * 60 * 60); // Difference in hours
-
-          if (timeDifference > 4) {
-            console.log(`[DropboxAPI] Deleting old file: ${entry.name} (Last modified: ${entry.client_modified})`);
-            await dbx.filesDeleteV2({ path: entry.path_lower });
-          }
+      try {
+        await dbx.filesCreateFolderV2({ path: folderPath });
+        console.log(`[DropboxAPI] Folder created: ${folderPath}`);
+      } catch (err) {
+        if (err.error?.error_summary?.startsWith("path/conflict/folder")) {
+          console.log("[DropboxAPI] Folder already exists, skipping creation.");
+        } else {
+          console.error("[DropboxAPI] Error creating folder:", err);
+          throw err;
         }
       }
 
-      // Read the file content
+      // Read file content
       const fs = require('fs');
       const fileContent = fs.readFileSync(filePath);
 
@@ -48,9 +50,7 @@ const dropboxAPI = {
       console.log("[DropboxAPI] File uploaded successfully:", uploadResponse);
 
       // Get a temporary download link
-      const linkResponse = await dbx.filesGetTemporaryLink({
-        path: dropboxPath,
-      });
+      const linkResponse = await dbx.filesGetTemporaryLink({ path: dropboxPath });
 
       console.log("[DropboxAPI] Temporary link response:", linkResponse);
 

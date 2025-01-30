@@ -1,15 +1,16 @@
 const dropboxAPI = require('./dropboxAPI');
 const { processMedia } = require('./ffmpeg');
+const path = require('path');
 
 (async () => {
   // Example user input for media processing
   const userInput = {
     inputPath: "./download/video.mp4",    // Must exist
-    videoOutput: false,                   // true for video ouput, false for audio output | if the the input format is audio, the value cannot be set to true
-    resolution: "",                       // input "0" or "1" for default value | to use scale mode input a float value in 0-1 range, sth like "0.75" | to use set resolution mode input sth like "1920x1080" or "1920*1080" | can be left empty entirely if videoOutput = false
-    fps: "",                              // left empty or input "0" for default value | fps cannot exceed 120
-    quality: "high",                      // use 'low', 'standard', or 'high'
-    outputFormat: ".mp3",                 // ".mp3", ".aiff", ".aac", ".wav" for audio | ".mp4", ".mov", ".avi", ".mkv", ".flv", ".wmv" for video
+    videoOutput: true,                   // true for video output, false for audio output
+    resolution: "0.1",                       // Can be left empty if videoOutput = false
+    fps: "0",                              // FPS setting
+    quality: "high",                      // 'low', 'standard', or 'high'
+    outputFormat: ".mp4",                 // Output format
   };
 
   try {
@@ -21,9 +22,11 @@ const { processMedia } = require('./ffmpeg');
     if (result.success) {
       console.log('Media processed successfully. File path:', result.processedFilePath);
 
-      // Step 2: Use the same file name from the processed file path for Dropbox
-      const processedFileName = result.processedFilePath.split('/').pop();
-      const DROPBOX_PATH = `/processed-media/${processedFileName}`;
+      // Extract filename and subfolder for Dropbox path
+      const processedFileName = path.basename(result.processedFilePath); // Extracts just the filename
+      const processedSubfolder = path.dirname(result.processedFilePath).split(path.sep).pop(); // Extracts subfolder name
+
+      const DROPBOX_PATH = `/user_processed_file/${processedSubfolder}/${processedFileName}`;
 
       // Step 3: Upload the processed file to Dropbox
       console.log('Uploading to Dropbox...');
