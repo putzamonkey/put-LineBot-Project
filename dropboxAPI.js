@@ -34,6 +34,27 @@ const dropboxAPI = {
         }
       }
 
+      // Cleanup old files (older than 4 hours)
+      console.log(`[DropboxAPI] Checking for old files in folder: ${folderPath}`);
+      try {
+        const listResponse = await dbx.filesListFolder({ path: folderPath });
+        const now = new Date();
+
+        for (const entry of listResponse.result.entries) {
+          if (entry['.tag'] === 'file') {
+            const fileModifiedTime = new Date(entry.client_modified);
+            const timeDifference = (now - fileModifiedTime) / (1000 * 60 * 60); // Hours
+
+            if (timeDifference > 4) {
+              console.log(`[DropboxAPI] Deleting old file: ${entry.name} (Last modified: ${entry.client_modified})`);
+              await dbx.filesDeleteV2({ path: entry.path_lower });
+            }
+          }
+        }
+      } catch (err) {
+        console.error("[DropboxAPI] Error while cleaning up old files:", err);
+      }
+
       // Read file content
       const fs = require('fs');
       const fileContent = fs.readFileSync(filePath);
