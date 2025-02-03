@@ -13,6 +13,7 @@ const testscript = require('./testscript');
 const validateFiles = require('./fileValidator');
 const validateFile = require('./fileTypeValidation.js');
 const { processMedia } = require('./ffmpeg.js');
+const dropboxAPI = require('./dropboxAPI');
 
 app.use('/processed_media', express.static(path.join(__dirname, 'processed_media')));
 
@@ -277,20 +278,41 @@ async function handleEvents(event) {
                     if (result.success) {
                         const processedFilePath = result.processedFilePath;
         
-                        // สร้าง URL ของวิดีโอที่ประมวลผลแล้ว
-                        const fileUrl = `${process.env.SERVER_URL}/processed_media/video/${path.basename(processedFilePath)}`;
+                        // // สร้าง URL ของวิดีโอที่ประมวลผลแล้ว
+                        // const fileUrl = `${process.env.SERVER_URL}/processed_media/video/${path.basename(processedFilePath)}`;
         
+                        // return client.replyMessage(event.replyToken, [
+                        //     {
+                        //         "type": "text",
+                        //         "text": `Video processing complete! You can watch/download it here:\n${fileUrl}`
+                        //     },
+                        //     {
+                        //         "type": "video",
+                        //         "originalContentUrl": fileUrl,
+                        //         "previewImageUrl": "https://via.placeholder.com/240x135.png?text=Video"
+                        //     }
+                        // ]);
+
+                        console.log('Media processed successfully. File path:', processedFilePath);
+
+                        // Extract filename and subfolder for Dropbox path
+                        const processedFileName = path.basename(processedFilePath); // Extracts just the filename
+                        const processedSubfolder = path.dirname(processedFilePath).split(path.sep).pop(); // Extracts subfolder name
+
+                        const DROPBOX_PATH = `/user_processed_file/${processedSubfolder}/${processedFileName}`;
+
+                        // Step 3: Upload the processed file to Dropbox
+                        console.log('Uploading to Dropbox...');
+
+                        const downloadLink = await dropboxAPI.uploadToDropbox(processedFilePath, DROPBOX_PATH);
+
                         return client.replyMessage(event.replyToken, [
                             {
                                 "type": "text",
-                                "text": `Video processing complete! You can watch/download it here:\n${fileUrl}`
-                            },
-                            {
-                                "type": "video",
-                                "originalContentUrl": fileUrl,
-                                "previewImageUrl": "https://via.placeholder.com/240x135.png?text=Video"
+                                "text": `Video processing complete! You can watch/download it here:\n${downloadLink}`
                             }
                         ]);
+                        
                     } else {
                         return client.replyMessage(event.replyToken, [
                             {
