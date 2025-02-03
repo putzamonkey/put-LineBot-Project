@@ -9,11 +9,11 @@ const fs = require('fs');
 const path = require('path');
 const { pipeline } = require('stream');
 
-const testscript = require('./testscript');
+// const testscript = require('./testscript');
 const validateFiles = require('./fileValidator');
 const validateFile = require('./fileTypeValidation.js');
 const { processMedia } = require('./ffmpeg.js');
-const dropboxAPI = require('./dropboxAPI');
+const dropboxAPI = require('./dropboxAPI.js');
 
 app.use('/processed_media', express.static(path.join(__dirname, 'processed_media')));
 
@@ -267,7 +267,7 @@ async function handleEvents(event) {
                     const userConfig = {
                         inputPath: dlpath,
                         videoOutput: true,
-                        resolution: ffmpegConfig.resolution || "1280x720",
+                        resolution: ffmpegConfig.resolution || "1",
                         fps: ffmpegConfig.fps || 30,
                         quality: ffmpegConfig.quality || "standard",
                         outputFormat: ".mp4"

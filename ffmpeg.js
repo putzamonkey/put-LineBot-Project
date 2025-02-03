@@ -108,27 +108,27 @@ async function processMedia(userInput) {
 // ---------------------------------------------------------
 // C) Example Test
 // ---------------------------------------------------------
-(async () => {
-  // Example user input
-  const userInput = {
-    inputPath: "./download/video.mp4",    // Must exist
-    videoOutput: false,                   // true for video ouput, false for audio output | if the the input format is audio, the value cannot be set to true
-    resolution: "",                       // input "0" or "1" for default value | to use scale mode input a float value in 0-1 range, sth like "0.75" | to use set resolution mode input sth like "1920x1080" or "1920*1080" | can be left empty entirely if videoOutput = false
-    fps: "",                              // left empty or input "0" for default value | fps cannot exceed 120
-    quality: "high",                      // use 'low', 'standard', or 'high'
-    outputFormat: ".mp3",                 // ".mp3", ".aiff", ".aac", ".wav" for audio | ".mp4", ".mov", ".avi", ".mkv", ".flv", ".wmv" for video
-  };
+// (async () => {
+//   // Example user input
+//   const userInput = {
+//     inputPath: "./download/video.mp4",    // Must exist
+//     videoOutput: false,                   // true for video ouput, false for audio output | if the the input format is audio, the value cannot be set to true
+//     resolution: "",                       // input "0" or "1" for default value | to use scale mode input a float value in 0-1 range, sth like "0.75" | to use set resolution mode input sth like "1920x1080" or "1920*1080" | can be left empty entirely if videoOutput = false
+//     fps: "",                              // left empty or input "0" for default value | fps cannot exceed 120
+//     quality: "high",                      // use 'low', 'standard', or 'high'
+//     outputFormat: ".mp3",                 // ".mp3", ".aiff", ".aac", ".wav" for audio | ".mp4", ".mov", ".avi", ".mkv", ".flv", ".wmv" for video
+//   };
 
-  console.log("Testing with userInput:", userInput);
+//   console.log("Testing with userInput:", userInput);
 
-  const result = await processMedia(userInput);
+//   const result = await processMedia(userInput);
 
-  if (result.success) {
-    console.log("[JS] SUCCESS! Processed file at:", result.processedFilePath);
-  } else {
-    console.error("[JS] ERROR:", result.error);
-  }
-})();
+//   if (result.success) {
+//     console.log("[JS] SUCCESS! Processed file at:", result.processedFilePath);
+//   } else {
+//     console.error("[JS] ERROR:", result.error);
+//   }
+// })();
 
 /**
  * D) Export if needed, e.g. for a bot file that reuses processMedia
