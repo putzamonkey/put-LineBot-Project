@@ -239,6 +239,7 @@ async function handleEvents(event) {
             }
         ]);
 
+
     } else {
 
         if (event.message.type == 'image') {
@@ -277,21 +278,6 @@ async function handleEvents(event) {
         
                     if (result.success) {
                         const processedFilePath = result.processedFilePath;
-        
-                        // // สร้าง URL ของวิดีโอที่ประมวลผลแล้ว
-                        // const fileUrl = `${process.env.SERVER_URL}/processed_media/video/${path.basename(processedFilePath)}`;
-        
-                        // return client.replyMessage(event.replyToken, [
-                        //     {
-                        //         "type": "text",
-                        //         "text": `Video processing complete! You can watch/download it here:\n${fileUrl}`
-                        //     },
-                        //     {
-                        //         "type": "video",
-                        //         "originalContentUrl": fileUrl,
-                        //         "previewImageUrl": "https://via.placeholder.com/240x135.png?text=Video"
-                        //     }
-                        // ]);
 
                         console.log('Media processed successfully. File path:', processedFilePath);
 
@@ -312,7 +298,7 @@ async function handleEvents(event) {
                                 "text": `Video processing complete! You can watch/download it here:\n${downloadLink}`
                             }
                         ]);
-                        
+
                     } else {
                         return client.replyMessage(event.replyToken, [
                             {
@@ -333,61 +319,64 @@ async function handleEvents(event) {
             }
 
         } else if (event.message.type === 'audio') {
+
             if (event.message.contentProvider.type === 'line') {
                 const dlpath = path.join(__dirname, 'download/audio', `${event.message.id}.mp3`);
                 await downloadcontent(event.message.id, dlpath);
-                return client.replyMessage(event.replyToken, [
-                    {
-                        "type": "text",
-                        "text": `Audio download complete`,
-                        "quoteToken": event.message.quoteToken
-                    }
-                ]);
-            }
-        } else {
+        
+                try {
+                    const userConfig = {
+                        inputPath: dlpath,
+                        videoOutput: false,
+                        resolution: ffmpegConfig.resolution,
+                        fps: ffmpegConfig.fps,
+                        quality: ffmpegConfig.quality || "standard",
+                        outputFormat: ".mp3"
+                    };
+        
+                    const result = await processMedia(userConfig);
+        
+                    if (result.success) {
+                        const processedFilePath = result.processedFilePath;
 
-            return client.replyMessage(event.replyToken, [
-                {
-                    "type": "text",
-                    "text": `Invalid input. Here are some options to get started:`,
-                    "quickReply": {
-                        "items": [
+                        console.log('Media processed successfully. File path:', processedFilePath);
+
+                        // Extract filename and subfolder for Dropbox path
+                        const processedFileName = path.basename(processedFilePath); // Extracts just the filename
+                        const processedSubfolder = path.dirname(processedFilePath).split(path.sep).pop(); // Extracts subfolder name
+
+                        const DROPBOX_PATH = `/user_processed_file/${processedSubfolder}/${processedFileName}`;
+
+                        // Step 3: Upload the processed file to Dropbox
+                        console.log('Uploading to Dropbox...');
+
+                        const downloadLink = await dropboxAPI.uploadToDropbox(processedFilePath, DROPBOX_PATH);
+
+                        return client.replyMessage(event.replyToken, [
                             {
-                                "type": "action",
-                                "action": {
-                                    "type": "postback",
-                                    "label": "Set FPS to 30",
-                                    "data": "fps:30"
-                                }
-                            },
-                            {
-                                "type": "action",
-                                "action": {
-                                    "type": "postback",
-                                    "label": "Set Resolution to 1080p",
-                                    "data": "resolution:1080p"
-                                }
-                            },
-                            {
-                                "type": "action",
-                                "action": {
-                                    "type": "postback",
-                                    "label": "Show Current Settings",
-                                    "data": "showData"
-                                }
-                            },
-                            {
-                                "type": "action",
-                                "action": {
-                                    "type": "postback",
-                                    "label": "Reset Configuration",
-                                    "data": "setNull"
-                                }
+                                "type": "text",
+                                "text": `Audio processing complete! You can listen/download it here:\n${downloadLink}`
                             }
-                        ]
+                        ]);
+
+                    } else {
+                        return client.replyMessage(event.replyToken, [
+                            {
+                                "type": "text",
+                                "text": `❌ Error processing audio: ${result.error}`
+                            }
+                        ]);
                     }
+                } catch (error) {
+                    console.error("FFmpeg processing error:", error);
+                    return client.replyMessage(event.replyToken, [
+                        {
+                            "type": "text",
+                            "text": "⚠️ An error occurred while processing the audio."
+                        }
+                    ]);
                 }
-            ])
+            }
         }
     }
 }
