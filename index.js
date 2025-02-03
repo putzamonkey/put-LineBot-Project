@@ -12,6 +12,9 @@ const { pipeline } = require('stream');
 const testscript = require('./testscript');
 const validateFiles = require('./fileValidator');
 const validateFile = require('./fileTypeValidation.js');
+const { processMedia } = require('./ffmpeg.js');
+
+app.use('/processed_media', express.static(path.join(__dirname, 'processed_media')));
 
 
 let ffmpegConfig = {
@@ -90,28 +93,28 @@ async function handleEvents(event) {
             return showData(event);
         }
 
-        if (userMessage === "test set 1") {
+        if (userMessage === "Video set 1") {
             ffmpegConfig.fps = 30;
             ffmpegConfig.resolution = "1280x720";
             ffmpegConfig.quality = "low";
             return showData(event);
         }
 
-        if (userMessage === "test set 2") {
+        if (userMessage === "Video set 2") {
             ffmpegConfig.fps = 60;
             ffmpegConfig.resolution = "1980x1080";
             ffmpegConfig.quality = "standard";
             return showData(event);
         }
 
-        if (userMessage === "test set 3") {
+        if (userMessage === "Video set 3") {
             ffmpegConfig.fps = 60;
             ffmpegConfig.resolution = "2560x1440";
             ffmpegConfig.quality = "standard";
             return showData(event);
         }
 
-        if (userMessage === "test set 4") {
+        if (userMessage === "Instructions") {
             ffmpegConfig.fps = 60;
             ffmpegConfig.resolution = "2560x1440";
             ffmpegConfig.quality = "high";
@@ -257,16 +260,54 @@ async function handleEvents(event) {
 
             if (event.message.contentProvider.type === 'line') {
                 const dlpath = path.join(__dirname, 'download/video', `${event.message.id}.mp4`);
-
                 await downloadcontent(event.message.id, dlpath);
-
-                return client.replyMessage(event.replyToken, [
-                    {
-                        "type": "text",
-                        "text": `Video download complete`,
-                        "quoteToken": event.message.quoteToken
+        
+                try {
+                    const userConfig = {
+                        inputPath: dlpath,
+                        videoOutput: true,
+                        resolution: ffmpegConfig.resolution || "1280x720",
+                        fps: ffmpegConfig.fps || 30,
+                        quality: ffmpegConfig.quality || "standard",
+                        outputFormat: ".mp4"
+                    };
+        
+                    const result = await processMedia(userConfig);
+        
+                    if (result.success) {
+                        const processedFilePath = result.processedFilePath;
+        
+                        // สร้าง URL ของวิดีโอที่ประมวลผลแล้ว
+                        const fileUrl = `${process.env.SERVER_URL}/processed_media/video/${path.basename(processedFilePath)}`;
+        
+                        return client.replyMessage(event.replyToken, [
+                            {
+                                "type": "text",
+                                "text": `Video processing complete! You can watch/download it here:\n${fileUrl}`
+                            },
+                            {
+                                "type": "video",
+                                "originalContentUrl": fileUrl,
+                                "previewImageUrl": "https://via.placeholder.com/240x135.png?text=Video"
+                            }
+                        ]);
+                    } else {
+                        return client.replyMessage(event.replyToken, [
+                            {
+                                "type": "text",
+                                "text": `❌ Error processing video: ${result.error}`
+                            }
+                        ]);
                     }
-                ]);
+                } catch (error) {
+                    console.error("FFmpeg processing error:", error);
+                    return client.replyMessage(event.replyToken, [
+                        {
+                            "type": "text",
+                            "text": "⚠️ An error occurred while processing the video."
+                        }
+                    ]);
+                }
             }
 
         } else if (event.message.type === 'audio') {
