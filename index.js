@@ -96,7 +96,7 @@ async function handleEvents(event) {
 
         if (userMessage === "Video set 1") {
             ffmpegConfig.fps = 30;
-            ffmpegConfig.resolution = "1280x720";
+            ffmpegConfig.resolution = "1";
             ffmpegConfig.quality = "low";
             return showData(event);
         }
@@ -109,6 +109,27 @@ async function handleEvents(event) {
         }
 
         if (userMessage === "Video set 3") {
+            ffmpegConfig.fps = 60;
+            ffmpegConfig.resolution = "2560x1440";
+            ffmpegConfig.quality = "standard";
+            return showData(event);
+        }
+
+        if (userMessage === "Audio set 1") {
+            ffmpegConfig.fps = 60;
+            ffmpegConfig.resolution = "2560x1440";
+            ffmpegConfig.quality = "standard";
+            return showData(event);
+        }
+
+        if (userMessage === "Audio set 2") {
+            ffmpegConfig.fps = 60;
+            ffmpegConfig.resolution = "2560x1440";
+            ffmpegConfig.quality = "standard";
+            return showData(event);
+        }
+
+        if (userMessage === "Audio set 3") {
             ffmpegConfig.fps = 60;
             ffmpegConfig.resolution = "2560x1440";
             ffmpegConfig.quality = "standard";
