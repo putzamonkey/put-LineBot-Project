@@ -3,15 +3,44 @@ const fetch = require('node-fetch');
 const path = require('path');
 require('dotenv').config();
 
-const dropboxAPI = {
-  async uploadToDropbox(filePath, dropboxPath) {
-    const dropboxToken = process.env.DROPBOX_ACCESS_TOKEN;
+const APP_KEY = process.env.DROPBOX_APP_KEY;
+const APP_SECRET = process.env.DROPBOX_APP_SECRET;
+const REFRESH_TOKEN = process.env.DROPBOX_REFRESH_TOKEN;
 
-    if (!dropboxToken) {
-      throw new Error("[DropboxAPI] Dropbox access token is missing. Please set it in the .env file.");
+async function getAccessToken() {
+  try {
+    const response = await fetch("https://api.dropboxapi.com/oauth2/token", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded",
+      },
+      body: new URLSearchParams({
+        grant_type: "refresh_token",
+        refresh_token: REFRESH_TOKEN,
+        client_id: APP_KEY,
+        client_secret: APP_SECRET,
+      }),
+    });
+
+    const data = await response.json();
+
+    if (!data.access_token) {
+      throw new Error("Failed to retrieve access token");
     }
 
-    const dbx = new Dropbox({ accessToken: dropboxToken, fetch });
+    console.log("[DropboxAPI] New access token obtained.");
+    return data.access_token;
+  } catch (error) {
+    console.error("[DropboxAPI] Error refreshing access token:", error);
+    throw error;
+  }
+}
+
+const dropboxAPI = {
+  async uploadToDropbox(filePath, dropboxPath) {
+    const accessToken = await getAccessToken(); // Get a fresh token before uploading
+
+    const dbx = new Dropbox({ accessToken, fetch });
 
     try {
       // Normalize file paths for cross-platform compatibility
@@ -91,6 +120,3 @@ const dropboxAPI = {
 };
 
 module.exports = dropboxAPI;
-
-
-//test test test
