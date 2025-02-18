@@ -1,12 +1,14 @@
 <template>
   <div class="container mx-auto p-4">
-    <h1 class="text-2xl font-bold mb-4">LINE Bot Video Processor</h1>
+    <h1 class="text-3xl font-bold text-blue-600">LINE Bot Video Processor</h1>
     
-    <div class="flex flex-col space-y-4">
-      <input v-model="userMessage" type="text" placeholder="Enter command" class="border p-2 rounded" />
+    <!-- Input ส่งคำสั่ง -->
+    <div class="flex flex-col space-y-4 mt-4">
+      <input v-model="userMessage" type="text" placeholder="Enter command (e.g., fps:30)" class="border p-2 rounded" />
       <button @click="sendCommand" class="bg-blue-500 text-white p-2 rounded">Send Command</button>
     </div>
 
+    <!-- แสดงผลลัพธ์ -->
     <div v-if="responseMessage" class="mt-4 p-2 bg-gray-100 rounded">
       <strong>Response:</strong> {{ responseMessage }}
     </div>
@@ -15,20 +17,36 @@
 
 <script setup>
 import { ref } from 'vue'
+
 const userMessage = ref('')
 const responseMessage = ref('')
+const API_BASE = 'http://localhost:8080' // Backend URL
 
+// ฟังก์ชันส่งคำสั่งไปที่ API
 const sendCommand = async () => {
+  if (!userMessage.value) {
+    responseMessage.value = "Please enter a command."
+    return
+  }
+
   try {
-    const response = await fetch('http://localhost:8080/webhook', {
+    const response = await fetch(`${API_BASE}/webhook`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ events: [{ type: 'message', message: { type: 'text', text: userMessage.value } }] })
+      body: JSON.stringify({
+        events: [
+          {
+            type: 'message',
+            message: { type: 'text', text: userMessage.value }
+          }
+        ]
+      })
     })
+    
     const data = await response.json()
-    responseMessage.value = JSON.stringify(data)
+    responseMessage.value = JSON.stringify(data, null, 2)
   } catch (error) {
-    responseMessage.value = 'Error sending request'
+    responseMessage.value = "Error sending request"
   }
 }
 </script>
