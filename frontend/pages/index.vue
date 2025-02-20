@@ -1,59 +1,54 @@
 <template>
   <div class="container mx-auto p-4">
-    <h1 class="text-3xl font-bold text-blue-600">LINE Bot Video Processor</h1>
-    
-    <!-- Input ส่งคำสั่ง -->
-    <div class="flex flex-col space-y-4 mt-4">
-      <input v-model="userMessage" type="text" placeholder="Enter command (e.g., fps:30)" class="border p-2 rounded" />
-      <button @click="sendCommand" class="bg-blue-500 text-white p-2 rounded">Send Command</button>
+    <h1 class="text-2xl font-bold mb-4">Video Information Extractor</h1>
+    <div class="mb-4">
+      <input type="file" @change="handleFileUpload" accept="video/*" class="mb-2" />
+      <button @click="processVideo" class="bg-blue-500 text-white px-4 py-2 rounded">
+        Process Video
+      </button>
     </div>
-
-    <!-- แสดงผลลัพธ์ -->
-    <div v-if="responseMessage" class="mt-4 p-2 bg-gray-100 rounded">
-      <strong>Response:</strong> {{ responseMessage }}
+    <div v-if="videoInfo" class="bg-gray-100 p-4 rounded">
+      <h2 class="text-xl font-semibold mb-2">Video Information:</h2>
+      <p><strong>FPS:</strong> {{ videoInfo.fps }}</p>
+      <p><strong>Resolution:</strong> {{ videoInfo.resolution }}</p>
+      <p><strong>Quality:</strong> {{ videoInfo.quality }}</p>
     </div>
   </div>
 </template>
 
-<script setup>
-import { ref } from 'vue'
+<script>
+export default {
+  data() {
+    return {
+      selectedFile: null,
+      videoInfo: null,
+    }
+  },
+  methods: {
+    handleFileUpload(event) {
+      this.selectedFile = event.target.files[0]
+    },
+    async processVideo() {
+      if (!this.selectedFile) {
+        alert('Please select a video file first.')
+        return
+      }
 
-const userMessage = ref('')
-const responseMessage = ref('')
-const API_BASE = 'http://localhost:8080' // Backend URL
+      const formData = new FormData()
+      formData.append('video', this.selectedFile)
 
-// ฟังก์ชันส่งคำสั่งไปที่ API
-const sendCommand = async () => {
-  if (!userMessage.value) {
-    responseMessage.value = "Please enter a command."
-    return
-  }
-
-  try {
-    const response = await fetch(`${API_BASE}/webhook`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        events: [
-          {
-            type: 'message',
-            message: { type: 'text', text: userMessage.value }
-          }
-        ]
-      })
-    })
-    
-    const data = await response.json()
-    responseMessage.value = JSON.stringify(data, null, 2)
-  } catch (error) {
-    responseMessage.value = "Error sending request"
-  }
+      try {
+        const response = await this.$axios.post('/api/process-video', formData, {
+          headers: {
+            'Content-Type': 'multipart/form-data',
+          },
+        })
+        this.videoInfo = response.data
+      } catch (error) {
+        console.error('Error processing video:', error)
+        alert('An error occurred while processing the video.')
+      }
+    },
+  },
 }
 </script>
-
-<style scoped>
-.container {
-  max-width: 600px;
-  margin: auto;
-}
-</style>
