@@ -1,11 +1,12 @@
 export default defineNuxtConfig({
-  modules: ['@nuxtjs/tailwindcss'],
+  css: ['~/assets/css/main.css'],
 
-  runtimeConfig: {
-    public: {
-      apiBase: process.env.API_BASE || 'http://localhost:8080'  // เชื่อมกับ backend
-    }
+  postcss: {
+    plugins: {
+      tailwindcss: {},
+      autoprefixer: {},
+    },
   },
 
-  compatibilityDate: '2025-02-18'
+  compatibilityDate: '2025-02-20',
 })
