@@ -411,6 +411,56 @@ function showData(event) {
     ]);
 }
 
+app.use('/webhook', express.raw({ type: 'application/json' }));
+
+// Directory to store logs
+const LOGS_DIR = path.join(__dirname, 'logs');
+if (!fs.existsSync(LOGS_DIR)) {
+    fs.mkdirSync(LOGS_DIR);
+}
+
+// Function to log user activity
+function logUserActivity(userId, ffmpegConfig, eventType) {
+    const logFile = path.join(LOGS_DIR, `${userId}.log`);
+    const logEntry = `${new Date().toISOString()} - Event: ${eventType}, UserID: ${userId}, FPS: ${ffmpegConfig.fps || 'Not set'}, Resolution: ${ffmpegConfig.resolution || 'Not set'}, Quality: ${ffmpegConfig.quality || 'Not set'}\n`;
+    
+    fs.appendFile(logFile, logEntry, (err) => {
+        if (err) {
+            console.error('Failed to save log:', err);
+        }
+    });
+}
+
+// Save log via API
+app.post('/logs', (req, res) => {
+    const { userId, ffmpegConfig } = req.body;
+    if (!userId || !ffmpegConfig) {
+        return res.status(400).json({ error: 'Missing userId or ffmpegConfig' });
+    }
+    
+    logUserActivity(userId, ffmpegConfig, 'Manual Log Entry');
+    res.json({ success: true, message: 'Log saved' });
+});
+
+// Get logs for a specific user
+app.get('/logs/:userId', (req, res) => {
+    const { userId } = req.params;
+    const logFile = path.join(LOGS_DIR, `${userId}.log`);
+    
+    if (!fs.existsSync(logFile)) {
+        return res.status(404).json({ error: 'No logs found' });
+    }
+    
+    fs.readFile(logFile, 'utf8', (err, data) => {
+        if (err) {
+            return res.status(500).json({ error: 'Failed to read log file' });
+        }
+        res.json({ userId, logs: data.split('\n').filter(line => line) });
+    });
+});
+
+
+
 async function downloadcontent(mid, downloadpath) {
     const stream = await client.getMessageContent(mid);
 
@@ -426,3 +476,5 @@ app.get('/', (req, res) => {
 })
 
 app.listen(8080, () => console.log('start server in port 8080'));
+console.log("Token:", process.env.token);
+console.log("Secret:", process.env.secretcode);
