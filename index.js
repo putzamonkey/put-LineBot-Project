@@ -280,7 +280,7 @@ async function handleEvents(event) {
             }
         
         } else if (event.message.type === 'video') {
-
+            const userId = event.source.userId;
             if (event.message.contentProvider.type === 'line') {
                 const dlpath = path.join(__dirname, 'download/video', `${event.message.id}.mp4`);
                 await downloadcontent(event.message.id, dlpath);
@@ -312,6 +312,8 @@ async function handleEvents(event) {
                         console.log('Uploading to Dropbox...');
 
                         const downloadLink = await dropboxAPI.uploadToDropbox(processedFilePath, DROPBOX_PATH);
+
+                        await logUserActivity(userId, ffmpegConfig, "Video Sent");
 
                         return client.replyMessage(event.replyToken, [
                             {
@@ -416,19 +418,29 @@ app.use('/webhook', express.raw({ type: 'application/json' }));
 // Directory to store logs
 const LOGS_DIR = path.join(__dirname, 'logs');
 if (!fs.existsSync(LOGS_DIR)) {
-    fs.mkdirSync(LOGS_DIR);
+    fs.mkdirSync(LOGS_DIR, { recursive: true });
+    console.log("Logs directory created.");
 }
 
 // Function to log user activity
-function logUserActivity(userId, ffmpegConfig, eventType) {
-    const logFile = path.join(LOGS_DIR, `${userId}.log`);
-    const logEntry = `${new Date().toISOString()} - Event: ${eventType}, UserID: ${userId}, FPS: ${ffmpegConfig.fps || 'Not set'}, Resolution: ${ffmpegConfig.resolution || 'Not set'}, Quality: ${ffmpegConfig.quality || 'Not set'}\n`;
+async function logUserActivity(userId, ffmpegConfig, eventType) {
+    try {
+        const profile = await client.getProfile(userId);
+        const username = profile.displayName || userId; // ถ้าไม่มีชื่อ ใช้ userId แทน
+
+        const logFile = path.join(LOGS_DIR, `${username}.log`);
+        const logEntry = `${new Date().toISOString()} - Event: ${eventType}, Username: ${username}, FPS: ${ffmpegConfig.fps || 'Not set'}, Resolution: ${ffmpegConfig.resolution || 'Not set'}, Quality: ${ffmpegConfig.quality || 'Not set'}\n`;
     
-    fs.appendFile(logFile, logEntry, (err) => {
-        if (err) {
-            console.error('Failed to save log:', err);
-        }
-    });
+        fs.appendFile(logFile, logEntry, (err) => {
+            if (err) {
+                console.error('Failed to save log:', err);
+            }
+        });
+
+        console.log(`Log saved for ${username}`);
+    } catch (error) {
+        console.error('Error fetching user profile:', error);
+    }
 }
 
 // Save log via API
@@ -458,6 +470,21 @@ app.get('/logs/:userId', (req, res) => {
         res.json({ userId, logs: data.split('\n').filter(line => line) });
     });
 });
+
+// if (require.main === module) {
+//     const userId = "putzamonkey"; // 🔹 ใส่ UserID จริงของคุณที่ใช้ทดสอบ
+//     const ffmpegConfig = {
+//         fps: 30,
+//         resolution: "1920x1080",
+//         quality: "high"
+//     };
+
+//     logUserActivity(userId, ffmpegConfig, "Manual Test").then(() => {
+//         console.log("✅ Log test completed!");
+//     }).catch(err => {
+//         console.error("❌ Log test failed:", err);
+//     });
+// }
 
 
 
