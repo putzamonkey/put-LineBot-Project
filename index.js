@@ -299,29 +299,25 @@ async function handleEvents(event) {
         
                     if (result.success) {
                         const processedFilePath = result.processedFilePath;
-
+        
                         console.log('Media processed successfully. File path:', processedFilePath);
-
-                        // Extract filename and subfolder for Dropbox path
-                        const processedFileName = path.basename(processedFilePath); // Extracts just the filename
-                        const processedSubfolder = path.dirname(processedFilePath).split(path.sep).pop(); // Extracts subfolder name
-
+        
+                        const processedFileName = path.basename(processedFilePath);
+                        const processedSubfolder = path.dirname(processedFilePath).split(path.sep).pop();
                         const DROPBOX_PATH = `/user_processed_file/${processedSubfolder}/${processedFileName}`;
-
-                        // Step 3: Upload the processed file to Dropbox
+        
                         console.log('Uploading to Dropbox...');
-
                         const downloadLink = await dropboxAPI.uploadToDropbox(processedFilePath, DROPBOX_PATH);
-
+        
                         await logUserActivity(userId, ffmpegConfig, "Video Sent");
-
+        
                         return client.replyMessage(event.replyToken, [
                             {
                                 "type": "text",
                                 "text": `Video processing complete! You can watch/download it here:\n${downloadLink}`
                             }
                         ]);
-
+        
                     } else {
                         return client.replyMessage(event.replyToken, [
                             {
@@ -416,27 +412,25 @@ function showData(event) {
 app.use('/webhook', express.raw({ type: 'application/json' }));
 
 // Directory to store logs
-const LOGS_DIR = path.join(__dirname, 'logs');
-if (!fs.existsSync(LOGS_DIR)) {
-    fs.mkdirSync(LOGS_DIR, { recursive: true });
-    console.log("Logs directory created.");
+const LOG_FILE = path.join(__dirname, 'logs', 'log.log');
+if (!fs.existsSync(path.dirname(LOG_FILE))) {
+    fs.mkdirSync(path.dirname(LOG_FILE), { recursive: true });
 }
 
 // Function to log user activity
 async function logUserActivity(userId, ffmpegConfig, eventType) {
     try {
         const profile = await client.getProfile(userId);
-        const username = profile.displayName || userId; // ถ้าไม่มีชื่อ ใช้ userId แทน
+        const username = profile.displayName || userId;
 
-        const logFile = path.join(LOGS_DIR, `${username}.log`);
         const logEntry = `${new Date().toISOString()} - Event: ${eventType}, Username: ${username}, FPS: ${ffmpegConfig.fps || 'Not set'}, Resolution: ${ffmpegConfig.resolution || 'Not set'}, Quality: ${ffmpegConfig.quality || 'Not set'}\n`;
     
-        fs.appendFile(logFile, logEntry, (err) => {
+        fs.appendFile(LOG_FILE, logEntry, (err) => {
             if (err) {
                 console.error('Failed to save log:', err);
             }
         });
-
+    
         console.log(`Log saved for ${username}`);
     } catch (error) {
         console.error('Error fetching user profile:', error);
@@ -455,21 +449,21 @@ app.post('/logs', (req, res) => {
 });
 
 // Get logs for a specific user
-app.get('/logs/:userId', (req, res) => {
-    const { userId } = req.params;
-    const logFile = path.join(LOGS_DIR, `${userId}.log`);
+// app.get('/logs/:userId', (req, res) => {
+//     const { userId } = req.params;
+//     const logFile = path.join(LOGS_DIR, `${userId}.log`);
     
-    if (!fs.existsSync(logFile)) {
-        return res.status(404).json({ error: 'No logs found' });
-    }
+//     if (!fs.existsSync(logFile)) {
+//         return res.status(404).json({ error: 'No logs found' });
+//     }
     
-    fs.readFile(logFile, 'utf8', (err, data) => {
-        if (err) {
-            return res.status(500).json({ error: 'Failed to read log file' });
-        }
-        res.json({ userId, logs: data.split('\n').filter(line => line) });
-    });
-});
+//     fs.readFile(logFile, 'utf8', (err, data) => {
+//         if (err) {
+//             return res.status(500).json({ error: 'Failed to read log file' });
+//         }
+//         res.json({ userId, logs: data.split('\n').filter(line => line) });
+//     });
+// });
 
 // if (require.main === module) {
 //     const userId = "putzamonkey"; // 🔹 ใส่ UserID จริงของคุณที่ใช้ทดสอบ
@@ -490,11 +484,8 @@ app.get('/logs/:userId', (req, res) => {
 
 async function downloadcontent(mid, downloadpath) {
     const stream = await client.getMessageContent(mid);
-
     const piplineSync = util.promisify(pipeline);
-
     const folder_download = fs.createWriteStream(downloadpath);
-
     await piplineSync(stream, folder_download);
 }
 
