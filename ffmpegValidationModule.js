@@ -52,50 +52,32 @@ function validateInputPath(inputPath, videoOutput) {
  * - Positive float => scale factor <= 1 => no upscaling
  */
 function validateResolution(resolutionStr) {
-  // If the input is 0, empty, or undefined, assume original resolution
-  if (!resolutionStr || resolutionStr.trim() === "" || resolutionStr === "0") {
-    return { mode: "scale", value: 1 }; // Original resolution
-  }
+  if (!resolutionStr) return { mode: "scale", value: 1 }; // Default to original resolution
 
-  // 1) Check "WxH" or "W*H"
+  // Ensure it's a string before calling .trim()
+  if (typeof resolutionStr !== "string") resolutionStr = String(resolutionStr);
+  resolutionStr = resolutionStr.trim();
+
+  // Check "WxH" or "W*H"
   const resRegex = /^(\d+)(x|\*)(\d+)$/i;
   const match = resolutionStr.match(resRegex);
   if (match) {
-    const width = parseInt(match[1], 10);
-    const height = parseInt(match[3], 10);
-    if (width <= 0 || height <= 0) {
-      throw new Error(
-        `Invalid resolution "${resolutionStr}". Width/height must be > 0.`
-      );
-    }
-    if (width > MAX_RESOLUTION || height > MAX_RESOLUTION) {
-      throw new Error(
-        `Resolution "${resolutionStr}" exceeds max ${MAX_RESOLUTION} in width/height.`
-      );
-    }
-    return { mode: "resolution", width, height };
+      const width = parseInt(match[1], 10);
+      const height = parseInt(match[3], 10);
+      if (width > 0 && height > 0) return { mode: "resolution", width, height };
   }
 
-  // 2) Check if it's a positive float => scale factor
-  const floatPattern = /^[0-9]*\.?[0-9]+$/;
-  if (floatPattern.test(resolutionStr)) {
-    const scaleVal = parseFloat(resolutionStr);
-    if (scaleVal <= 0) {
-      throw new Error(`Scale factor must be > 0. Got "${resolutionStr}".`);
-    }
-    if (scaleVal > 1) {
-      throw new Error(
-        `Scale factor "${scaleVal}" is > 1. Upscaling not allowed.`
-      );
-    }
-    return { mode: "scale", value: scaleVal };
+  // Check for a floating-point scale factor (0.1 - 1)
+  const floatValue = parseFloat(resolutionStr);
+  if (!isNaN(floatValue) && floatValue >= 0.1 && floatValue <= 1) {
+      return { mode: "scale", value: floatValue };
   }
 
-  // 3) Invalid format
-  throw new Error(
-    `Invalid resolution "${resolutionStr}". Must be WxH or a float <= 1.`
-  );
+  // Invalid format
+  throw new Error(`Invalid resolution "${resolutionStr}". Must be WxH or a float between 0.1 and 1.`);
 }
+
+
 
 /**
  * validateFps

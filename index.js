@@ -21,7 +21,9 @@ app.use('/processed_media', express.static(path.join(__dirname, 'processed_media
 let ffmpegConfig = {
     fps: null,
     resolution: null,
-    quality: null
+    quality: null,
+    outputFormat: null,
+    videoOutput: null
 };
 
 const config = {
@@ -39,7 +41,7 @@ app.post('/webhook', line.middleware(config), (req, res) => {
 
 // Link Rich Menu to a User
 async function linkRichMenu(userId) {
-    const richMenuId = "richmenu-3216d55fcc0fe9a9f4efc05531091c32"; // Replace with your Rich Menu ID
+    const richMenuId = "richmenu-368a46973a1c08471a882d63280faede"; // Replace with your Rich Menu ID
     const channelToken = process.env.token;
 
     await axios.post(`https://api.line.me/v2/bot/user/${userId}/richmenu/${richMenuId}`, null, {
@@ -57,38 +59,147 @@ async function handleEvents(event) {
         const userMessage = event.message.text;
 
         if (userMessage.startsWith("fps:")) {
-            const fpsValue = userMessage.split(":")[1];
-            ffmpegConfig.fps = parseInt(fpsValue);
-            return client.replyMessage(event.replyToken, [
-                {
-                    "type": "text",
-                    "text": `FPS set to ${ffmpegConfig.fps}`
-                }
-            ]);
+            let fpsValue = userMessage.split(":")[1]?.trim(); // Remove whitespace
+            let parsedFps = parseInt(fpsValue, 10);
+        
+            if (!isNaN(parsedFps) && parsedFps >= 0 && parsedFps <= 120) {
+                ffmpegConfig.fps = parsedFps;
+                return client.replyMessage(event.replyToken, [
+                    {
+                        "type": "text",
+                        "text": `✅ FPS set to ${ffmpegConfig.fps}`
+                    }
+                ]);
+            } else {
+                return client.replyMessage(event.replyToken, [
+                    {
+                        "type": "text",
+                        "text": "⚠️ Invalid FPS value! Please enter a number between 0 and 120."
+                    }
+                ]);
+            }
         }
-    
-
+        
         if (userMessage.startsWith("resolution:")) {
-            const resolutionValue = userMessage.split(":")[1];
-            ffmpegConfig.resolution = resolutionValue;
-            return client.replyMessage(event.replyToken, [
-                {
-                    "type": "text",
-                    "text": `Resolution set to ${ffmpegConfig.resolution}`
-                }
-            ]);
+            let resolutionValue = userMessage.split(":")[1];
+            
+            if (typeof resolutionValue !== "string") {
+                return client.replyMessage(event.replyToken, [
+                    { "type": "text", "text": "⚠️ Invalid resolution input!" }
+                ]);
+            }
+        
+            resolutionValue = resolutionValue.trim(); // Ensure it is a string before trimming
+        
+            // Check if it's a floating number between 0.1 and 1
+            let floatResolution = parseFloat(resolutionValue);
+            let isValidFloat = !isNaN(floatResolution) && floatResolution >= 0.1 && floatResolution <= 1;
+        
+            // Check if it's a valid resolution format (e.g., 1920x1080 or 1920*1080)
+            let resolutionPattern = /^(\d+)[x*](\d+)$/;
+            let match = resolutionValue.match(resolutionPattern);
+            let isValidResolutionFormat = match !== null;
+        
+            if (isValidFloat || isValidResolutionFormat) {
+                ffmpegConfig.resolution = isValidFloat ? floatResolution : `${match[1]}x${match[2]}`; // Convert * to x
+                return client.replyMessage(event.replyToken, [
+                    { "type": "text", "text": `✅ Resolution set to ${ffmpegConfig.resolution}` }
+                ]);
+            } else {
+                return client.replyMessage(event.replyToken, [
+                    { "type": "text", "text": "⚠️ Invalid resolution! Use a value between 0.1 and 1, or a format like 1920x1080 or 1920*1080." }
+                ]);
+            }
         }
-
+        
+        
         if (userMessage.startsWith("quality:")) {
-            const qualityValue = userMessage.split(":")[1];
-            ffmpegConfig.quality= qualityValue;
+            let qualityValue = userMessage.split(":")[1]?.trim().toLowerCase(); // Remove whitespace & ignore case
+        
+            if (["low", "standard", "high"].includes(qualityValue)) {
+                ffmpegConfig.quality = qualityValue;
+                return client.replyMessage(event.replyToken, [
+                    {
+                        "type": "text",
+                        "text": `✅ Quality set to ${ffmpegConfig.quality}`
+                    }
+                ]);
+            } else {
+                return client.replyMessage(event.replyToken, [
+                    {
+                        "type": "text",
+                        "text": "⚠️ Invalid quality! Choose 'low', 'standard', or 'high'."
+                    }
+                ]);
+            }
+        }
+        
+        if (userMessage.startsWith("videoOutput:")) {
+            let videoOutputValue = userMessage.split(":")[1]?.trim().toLowerCase(); // Remove whitespace & ignore case
+            
+            if (["true", "1"].includes(videoOutputValue)) {
+                ffmpegConfig.videoOutput = true;
+            } else if (["false", "0"].includes(videoOutputValue)) {
+                ffmpegConfig.videoOutput = false;
+            } else {
+                return client.replyMessage(event.replyToken, [
+                    {
+                        "type": "text",
+                        "text": "⚠️ Invalid videoOutput! Use 'true' or 'false' (or '1'/'0')."
+                    }
+                ]);
+            }
+        
+            // Ensure outputFormat is adjusted based on the updated videoOutput state
+            const validAudioFormats = [".mp3", ".aiff", ".aac", ".wav"];
+            const validVideoFormats = [".mp4", ".mov", ".avi", ".mkv", ".flv", ".wmv"];
+        
+            if (ffmpegConfig.videoOutput && !validVideoFormats.includes(ffmpegConfig.outputFormat)) {
+                ffmpegConfig.outputFormat = ".mp4"; // Default to video format
+            } else if (!ffmpegConfig.videoOutput && !validAudioFormats.includes(ffmpegConfig.outputFormat)) {
+                ffmpegConfig.outputFormat = ".mp3"; // Default to audio format
+            }
+        
             return client.replyMessage(event.replyToken, [
                 {
                     "type": "text",
-                    "text": `Quality set to ${ffmpegConfig.quality}`
+                    "text": `✅ videoOutput set to ${ffmpegConfig.videoOutput}, outputFormat adjusted to ${ffmpegConfig.outputFormat}`
                 }
             ]);
         }
+        
+        if (userMessage.startsWith("outputFormat:")) {
+            let formatValue = userMessage.split(":")[1]?.trim().toLowerCase(); // Remove whitespace & ignore case
+        
+            const validAudioFormats = [".mp3", ".aiff", ".aac", ".wav"];
+            const validVideoFormats = [".mp4", ".mov", ".avi", ".mkv", ".flv", ".wmv"];
+        
+            // STEP 1: Fix videoOutput if it is NULL
+            if (ffmpegConfig.videoOutput === null) {
+                if (validAudioFormats.includes(formatValue)) {
+                    ffmpegConfig.videoOutput = false;
+                } else if (validVideoFormats.includes(formatValue)) {
+                    ffmpegConfig.videoOutput = true;
+                }
+            }
+        
+            // STEP 2: Ensure outputFormat is valid based on videoOutput state
+            if (validAudioFormats.includes(formatValue) && ffmpegConfig.videoOutput === false) {
+                ffmpegConfig.outputFormat = formatValue;
+            } else if (validVideoFormats.includes(formatValue) && ffmpegConfig.videoOutput === true) {
+                ffmpegConfig.outputFormat = formatValue;
+            } else {
+                // Apply default based on the updated videoOutput state
+                ffmpegConfig.outputFormat = ffmpegConfig.videoOutput ? ".mp4" : ".mp3";
+            }
+        
+            return client.replyMessage(event.replyToken, [
+                {
+                    "type": "text",
+                    "text": `✅ outputFormat set to ${ffmpegConfig.outputFormat} (videoOutput: ${ffmpegConfig.videoOutput})`
+                }
+            ]);
+        }                     
         
         if (userMessage === "showData") {
             return showData(event);
@@ -286,13 +397,17 @@ async function handleEvents(event) {
                 await downloadcontent(event.message.id, dlpath);
         
                 try {
+                    // Use user-defined settings for videoOutput & outputFormat
+                    const videoOutput = ffmpegConfig.videoOutput !== undefined ? ffmpegConfig.videoOutput : true;
+                    const outputFormat = ffmpegConfig.outputFormat || (videoOutput ? ".mp4" : ".mp3");
+        
                     const userConfig = {
                         inputPath: dlpath,
-                        videoOutput: true,
+                        videoOutput: videoOutput,
                         resolution: ffmpegConfig.resolution || "1",
                         fps: ffmpegConfig.fps || 30,
                         quality: ffmpegConfig.quality || "standard",
-                        outputFormat: ".mp4"
+                        outputFormat: outputFormat
                     };
         
                     const result = await processMedia(userConfig);
@@ -314,7 +429,7 @@ async function handleEvents(event) {
                         return client.replyMessage(event.replyToken, [
                             {
                                 "type": "text",
-                                "text": `Video processing complete! You can watch/download it here:\n${downloadLink}`
+                                "text": `✅ Media processing complete! You can watch/download it here:\n${downloadLink}`
                             }
                         ]);
         
@@ -322,7 +437,7 @@ async function handleEvents(event) {
                         return client.replyMessage(event.replyToken, [
                             {
                                 "type": "text",
-                                "text": `❌ Error processing video: ${result.error}`
+                                "text": `❌ Error processing media: ${result.error}`
                             }
                         ]);
                     }
@@ -331,58 +446,57 @@ async function handleEvents(event) {
                     return client.replyMessage(event.replyToken, [
                         {
                             "type": "text",
-                            "text": "⚠️ An error occurred while processing the video."
+                            "text": "⚠️ An error occurred while processing the media."
                         }
                     ]);
                 }
             }
-
+        
         } else if (event.message.type === 'audio') {
-
             if (event.message.contentProvider.type === 'line') {
                 const dlpath = path.join(__dirname, 'download/audio', `${event.message.id}.mp3`);
                 await downloadcontent(event.message.id, dlpath);
         
                 try {
+                    // Use user-defined settings for videoOutput & outputFormat
+                    const videoOutput = ffmpegConfig.videoOutput !== undefined ? ffmpegConfig.videoOutput : false;
+                    const outputFormat = ffmpegConfig.outputFormat || (videoOutput ? ".mp4" : ".mp3");
+        
                     const userConfig = {
                         inputPath: dlpath,
-                        videoOutput: false,
+                        videoOutput: videoOutput,
                         resolution: ffmpegConfig.resolution,
                         fps: ffmpegConfig.fps,
                         quality: ffmpegConfig.quality || "standard",
-                        outputFormat: ".mp3"
+                        outputFormat: outputFormat
                     };
         
                     const result = await processMedia(userConfig);
         
                     if (result.success) {
                         const processedFilePath = result.processedFilePath;
-
+        
                         console.log('Media processed successfully. File path:', processedFilePath);
-
-                        // Extract filename and subfolder for Dropbox path
-                        const processedFileName = path.basename(processedFilePath); // Extracts just the filename
-                        const processedSubfolder = path.dirname(processedFilePath).split(path.sep).pop(); // Extracts subfolder name
-
+        
+                        const processedFileName = path.basename(processedFilePath);
+                        const processedSubfolder = path.dirname(processedFilePath).split(path.sep).pop();
                         const DROPBOX_PATH = `/user_processed_file/${processedSubfolder}/${processedFileName}`;
-
-                        // Step 3: Upload the processed file to Dropbox
+        
                         console.log('Uploading to Dropbox...');
-
                         const downloadLink = await dropboxAPI.uploadToDropbox(processedFilePath, DROPBOX_PATH);
-
+        
                         return client.replyMessage(event.replyToken, [
                             {
                                 "type": "text",
-                                "text": `Audio processing complete! You can listen/download it here:\n${downloadLink}`
+                                "text": `✅Media processing complete! You can listen/download it here:\n${downloadLink}`
                             }
                         ]);
-
+        
                     } else {
                         return client.replyMessage(event.replyToken, [
                             {
                                 "type": "text",
-                                "text": `❌ Error processing audio: ${result.error}`
+                                "text": `❌ Error processing media: ${result.error}`
                             }
                         ]);
                     }
@@ -391,7 +505,7 @@ async function handleEvents(event) {
                     return client.replyMessage(event.replyToken, [
                         {
                             "type": "text",
-                            "text": "⚠️ An error occurred while processing the audio."
+                            "text": "⚠️ An error occurred while processing the media."
                         }
                     ]);
                 }
@@ -399,15 +513,22 @@ async function handleEvents(event) {
         }
     }
 }
+        
 
 function showData(event) {
     return client.replyMessage(event.replyToken, [
         {
             "type": "text",
-            "text": `Current Configuration:\nFPS: ${ffmpegConfig.fps || 'Not set'}\nResolution: ${ffmpegConfig.resolution || 'Not set'}\nQuality: ${ffmpegConfig.quality || 'Not set'}`
+            "text": `🔧 **Current Configuration:**\n`
+                + `🎥 videoOutput: ${ffmpegConfig.videoOutput !== undefined ? ffmpegConfig.videoOutput : 'Not set'}\n`
+                + `📁 outputFormat: ${ffmpegConfig.outputFormat || 'Not set'}\n`
+                + `🎞️ fps: ${ffmpegConfig.fps !== null ? ffmpegConfig.fps : 'Not set'}\n`
+                + `📺 resolution: ${ffmpegConfig.resolution || 'Not set'}\n`
+                + `📊 quality: ${ffmpegConfig.quality || 'Not set'}`
         }
     ]);
 }
+
 
 app.use('/webhook', express.raw({ type: 'application/json' }));
 
