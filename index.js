@@ -150,20 +150,10 @@ async function handleEvents(event) {
                 ]);
             }
         
-            // Ensure outputFormat is adjusted based on the updated videoOutput state
-            const validAudioFormats = [".mp3", ".aiff", ".aac", ".wav"];
-            const validVideoFormats = [".mp4", ".mov", ".avi", ".mkv", ".flv", ".wmv"];
-        
-            if (ffmpegConfig.videoOutput && !validVideoFormats.includes(ffmpegConfig.outputFormat)) {
-                ffmpegConfig.outputFormat = ".mp4"; // Default to video format
-            } else if (!ffmpegConfig.videoOutput && !validAudioFormats.includes(ffmpegConfig.outputFormat)) {
-                ffmpegConfig.outputFormat = ".mp3"; // Default to audio format
-            }
-        
             return client.replyMessage(event.replyToken, [
                 {
                     "type": "text",
-                    "text": `✅ videoOutput set to ${ffmpegConfig.videoOutput}, outputFormat adjusted to ${ffmpegConfig.outputFormat}`
+                    "text": `✅ videoOutput set to ${ffmpegConfig.videoOutput}`
                 }
             ]);
         }
@@ -174,88 +164,89 @@ async function handleEvents(event) {
             const validAudioFormats = [".mp3", ".aiff", ".aac", ".wav"];
             const validVideoFormats = [".mp4", ".mov", ".avi", ".mkv", ".flv", ".wmv"];
         
-            // STEP 1: Fix videoOutput if it is NULL
-            if (ffmpegConfig.videoOutput === null) {
-                if (validAudioFormats.includes(formatValue)) {
-                    ffmpegConfig.videoOutput = false;
-                } else if (validVideoFormats.includes(formatValue)) {
-                    ffmpegConfig.videoOutput = true;
-                }
+            // Ensure format starts with "." (e.g., "mp3" -> ".mp3")
+            if (!formatValue.startsWith(".")) {
+                formatValue = "." + formatValue;
             }
         
-            // STEP 2: Ensure outputFormat is valid based on videoOutput state
-            if (validAudioFormats.includes(formatValue) && ffmpegConfig.videoOutput === false) {
-                ffmpegConfig.outputFormat = formatValue;
-            } else if (validVideoFormats.includes(formatValue) && ffmpegConfig.videoOutput === true) {
-                ffmpegConfig.outputFormat = formatValue;
-            } else {
-                // Apply default based on the updated videoOutput state
-                ffmpegConfig.outputFormat = ffmpegConfig.videoOutput ? ".mp4" : ".mp3";
+            if (![...validAudioFormats, ...validVideoFormats].includes(formatValue)) {
+                return client.replyMessage(event.replyToken, [
+                    {
+                        "type": "text",
+                        "text": `⚠️ Invalid outputFormat! Please use a valid format:\n`
+                            + `🎵 Audio Formats: ${validAudioFormats.join(", ")}\n`
+                            + `🎥 Video Formats: ${validVideoFormats.join(", ")}`
+                    }
+                ]);
             }
+        
+            ffmpegConfig.outputFormat = formatValue;
         
             return client.replyMessage(event.replyToken, [
                 {
                     "type": "text",
-                    "text": `✅ outputFormat set to ${ffmpegConfig.outputFormat} (videoOutput: ${ffmpegConfig.videoOutput})`
+                    "text": `✅ outputFormat set to ${ffmpegConfig.outputFormat}`
                 }
             ]);
-        }                     
+        }
         
         if (userMessage === "showData") {
             return showData(event);
         }
 
-        if (userMessage === "Video set 1") {
+        if (userMessage === "HQvideo") {
+            ffmpegConfig.fps = 60;
+            ffmpegConfig.resolution = "1";
+            ffmpegConfig.quality = "high";
+            ffmpegConfig.videoOutput = true;
+            ffmpegConfig.outputFormat = ".mp4";
+            return showData(event);
+        }
+
+        if (userMessage === "SDvideo") {
             ffmpegConfig.fps = 30;
             ffmpegConfig.resolution = "1";
+            ffmpegConfig.quality = "standard";
+            ffmpegConfig.videoOutput = true;
+            ffmpegConfig.outputFormat = ".mp4";
+            return showData(event);
+        }
+
+        if (userMessage === "LQvideo") {
+            ffmpegConfig.fps = 30;
+            ffmpegConfig.resolution = "0.5";
             ffmpegConfig.quality = "low";
+            ffmpegConfig.videoOutput = true;
+            ffmpegConfig.outputFormat = ".mp4";
             return showData(event);
         }
 
-        if (userMessage === "Video set 2") {
-            ffmpegConfig.fps = 60;
-            ffmpegConfig.resolution = "1980x1080";
-            ffmpegConfig.quality = "standard";
-            return showData(event);
-        }
-
-        if (userMessage === "Video set 3") {
-            ffmpegConfig.fps = 60;
-            ffmpegConfig.resolution = "2560x1440";
-            ffmpegConfig.quality = "standard";
-            return showData(event);
-        }
-
-        if (userMessage === "Audio set 1") {
-            ffmpegConfig.fps = 60;
-            ffmpegConfig.resolution = "2560x1440";
-            ffmpegConfig.quality = "standard";
-            return showData(event);
-        }
-
-        if (userMessage === "Audio set 2") {
-            ffmpegConfig.fps = 60;
-            ffmpegConfig.resolution = "2560x1440";
-            ffmpegConfig.quality = "standard";
-            return showData(event);
-        }
-
-        if (userMessage === "Audio set 3") {
-            ffmpegConfig.fps = 60;
-            ffmpegConfig.resolution = "2560x1440";
-            ffmpegConfig.quality = "standard";
-            return showData(event);
-        }
-
-        if (userMessage === "Instructions") {
-            ffmpegConfig.fps = 60;
-            ffmpegConfig.resolution = "2560x1440";
+        if (userMessage === "HQaudio") {
+            ffmpegConfig.fps = null;
+            ffmpegConfig.resolution = null;
             ffmpegConfig.quality = "high";
+            ffmpegConfig.videoOutput = false;
+            ffmpegConfig.outputFormat = ".mp3";
             return showData(event);
         }
 
+        if (userMessage === "SDaudio") {
+            ffmpegConfig.fps = null;
+            ffmpegConfig.resolution = null;
+            ffmpegConfig.quality = "standard";
+            ffmpegConfig.videoOutput = false;
+            ffmpegConfig.outputFormat = ".mp3";
+            return showData(event);
+        }
 
-
+        if (userMessage === "LQaudio") {
+            ffmpegConfig.fps = null;
+            ffmpegConfig.resolution = null;
+            ffmpegConfig.quality = "low";
+            ffmpegConfig.videoOutput = false;
+            ffmpegConfig.outputFormat = ".mp3";
+            return showData(event);
+        }
 
         if (userMessage === 'fileTests') {
             try {
@@ -319,13 +310,59 @@ async function handleEvents(event) {
             ffmpegConfig.fps = null;
             ffmpegConfig.resolution = null;
             ffmpegConfig.quality = null;
+            ffmpegConfig.outputFormat = null;
+            ffmpegConfig.videoOutput = null;
             return showData(event);
         }
+
+        if (
+            userMessage.toLowerCase().startsWith("help") ||
+            userMessage.toLowerCase().startsWith("h")
+        ) {
+            // Customize this text however you like
+            const helpText = 
+        `Here’s how to use our Bot:
+        
+        1. Set FFmpeg parameters before uploading media:
+           - fps:<value> (0 - 120)
+           - resolution:<0.1 - 1 or WxH>
+           - quality:<low/standard/high>
+           - videoOutput:<true/false or 1/0>
+           - outputFormat:<.mp3, .mp4, .wav, etc.>
+        
+        2. Check your current settings:
+           - Type "showData" to see the current FFmpeg configuration.
+        
+        3. Clear your current settings:
+           - Type "setNull" to reset all parameters (FPS, Resolution, Quality, etc.) to "Not set".
+        
+        4. Upload your media:
+           - If it’s a VIDEO, you can choose videoOutput=true (video out) or false (audio out).
+           - If it’s AUDIO, set videoOutput=false.
+           - Output format must match your selected output type.
+        
+        5. Example Commands:
+           - fps:60
+           - resolution:1920x1080
+           - quality:standard
+           - videoOutput:true
+           - outputFormat:mp4
+        
+        After setting everything, just upload your file and the bot will process it!`;
+        
+            return client.replyMessage(event.replyToken, [
+                {
+                    type: "text",
+                    text: helpText
+                }
+            ]);
+        }
+        
 
     return client.replyMessage(event.replyToken, [
         {
             "type": "text",
-            "text": "Invalid input. Use 'fps:<value>' or 'resolution:<value>' to set FFmpeg configuration."
+            "text": "Invalid input, please type \"help\" or \"h\" in the chat for more information."
         }
     ]);
 
@@ -376,19 +413,13 @@ async function handleEvents(event) {
 
         if (event.message.type == 'image') {
 
-            if(event.message.contentProvider.type === 'line'){
-                const dlpath = path.join(__dirname, 'download/image', `${event.message.id}.jpg`)
-
-                await downloadcontent(event.message.id, dlpath)
-
-                return client.replyMessage(event.replyToken, [
-                    {
-                        "type": "text",
-                        "text": `Image Download complete`,
-                        "quoteToken": event.message.quoteToken
-                    }
-                ])
-            }
+            return client.replyMessage(event.replyToken, [
+                {
+                    "type": "text",
+                    "text": `Invalid file type, please upload the correct file type`,
+                    "quoteToken": event.message.quoteToken
+                }
+            ]) 
         
         } else if (event.message.type === 'video') {
             const userId = event.source.userId;
@@ -396,11 +427,48 @@ async function handleEvents(event) {
                 const dlpath = path.join(__dirname, 'download/video', `${event.message.id}.mp4`);
                 await downloadcontent(event.message.id, dlpath);
         
+                // Validate user-config vs. file type
                 try {
-                    // Use user-defined settings for videoOutput & outputFormat
-                    const videoOutput = ffmpegConfig.videoOutput !== undefined ? ffmpegConfig.videoOutput : true;
+                    // 1) Check for user-defined or default
+                    const videoOutput = (ffmpegConfig.videoOutput !== undefined && ffmpegConfig.videoOutput !== null)
+                        ? ffmpegConfig.videoOutput
+                        : null;
+                    
+                    // 2) If videoOutput is null => user must explicitly set
+                    if (videoOutput === null) {
+                        return client.replyMessage(event.replyToken, [
+                            {
+                                "type": "text",
+                                "text": "⚠️ videoOutput is not set! Please set it to 'true' or 'false' before uploading."
+                            }
+                        ]);
+                    }
+        
+                    const validAudioFormats = [".mp3", ".aiff", ".aac", ".wav"];
+                    const validVideoFormats = [".mp4", ".mov", ".avi", ".mkv", ".flv", ".wmv"];
+        
+                    // 3) Check outputFormat consistency
                     const outputFormat = ffmpegConfig.outputFormat || (videoOutput ? ".mp4" : ".mp3");
         
+                    if (videoOutput === true && !validVideoFormats.includes(outputFormat)) {
+                        return client.replyMessage(event.replyToken, [
+                            {
+                                "type": "text",
+                                "text": `⚠️ Inconsistent settings! videoOutput=true requires a video format (${validVideoFormats.join(", ")}).`
+                            }
+                        ]);
+                    }
+        
+                    if (videoOutput === false && !validAudioFormats.includes(outputFormat)) {
+                        return client.replyMessage(event.replyToken, [
+                            {
+                                "type": "text",
+                                "text": `⚠️ Inconsistent settings! videoOutput=false requires an audio format (${validAudioFormats.join(", ")}).`
+                            }
+                        ]);
+                    }
+        
+                    // All good -> proceed
                     const userConfig = {
                         inputPath: dlpath,
                         videoOutput: videoOutput,
@@ -414,7 +482,6 @@ async function handleEvents(event) {
         
                     if (result.success) {
                         const processedFilePath = result.processedFilePath;
-        
                         console.log('Media processed successfully. File path:', processedFilePath);
         
                         const processedFileName = path.basename(processedFilePath);
@@ -432,7 +499,6 @@ async function handleEvents(event) {
                                 "text": `✅ Media processing complete! You can watch/download it here:\n${downloadLink}`
                             }
                         ]);
-        
                     } else {
                         return client.replyMessage(event.replyToken, [
                             {
@@ -441,6 +507,7 @@ async function handleEvents(event) {
                             }
                         ]);
                     }
+        
                 } catch (error) {
                     console.error("FFmpeg processing error:", error);
                     return client.replyMessage(event.replyToken, [
@@ -454,17 +521,50 @@ async function handleEvents(event) {
         
         } else if (event.message.type === 'audio') {
             if (event.message.contentProvider.type === 'line') {
+                const userId = event.source.userId;
                 const dlpath = path.join(__dirname, 'download/audio', `${event.message.id}.mp3`);
                 await downloadcontent(event.message.id, dlpath);
         
                 try {
-                    // Use user-defined settings for videoOutput & outputFormat
-                    const videoOutput = ffmpegConfig.videoOutput !== undefined ? ffmpegConfig.videoOutput : false;
-                    const outputFormat = ffmpegConfig.outputFormat || (videoOutput ? ".mp4" : ".mp3");
+                    // 1) Check for user-defined or default
+                    const videoOutput = (ffmpegConfig.videoOutput !== undefined && ffmpegConfig.videoOutput !== null)
+                        ? ffmpegConfig.videoOutput
+                        : null;
         
+                    // 2) Must be false for audio
+                    if (videoOutput === null) {
+                        return client.replyMessage(event.replyToken, [
+                            {
+                                "type": "text",
+                                "text": "⚠️ videoOutput is not set! Please set it to 'false' before uploading an audio file."
+                            }
+                        ]);
+                    } 
+                    if (videoOutput === true) {
+                        return client.replyMessage(event.replyToken, [
+                            {
+                                "type": "text",
+                                "text": "⚠️ Inconsistent settings! You cannot convert audio with videoOutput=true.\nplease set the videoOutput=false."
+                            }
+                        ]);
+                    }
+        
+                    // So videoOutput is definitely false here
+                    const validAudioFormats = [".mp3", ".aiff", ".aac", ".wav"];
+                    const outputFormat = ffmpegConfig.outputFormat || ".mp3";
+                    if (!validAudioFormats.includes(outputFormat)) {
+                        return client.replyMessage(event.replyToken, [
+                            {
+                                "type": "text",
+                                "text": `⚠️ Inconsistent settings! For audio input (videoOutput=false), outputFormat must be one of ${validAudioFormats.join(", ")}`
+                            }
+                        ]);
+                    }
+        
+                    // All good -> proceed
                     const userConfig = {
                         inputPath: dlpath,
-                        videoOutput: videoOutput,
+                        videoOutput: false,
                         resolution: ffmpegConfig.resolution,
                         fps: ffmpegConfig.fps,
                         quality: ffmpegConfig.quality || "standard",
@@ -475,7 +575,6 @@ async function handleEvents(event) {
         
                     if (result.success) {
                         const processedFilePath = result.processedFilePath;
-        
                         console.log('Media processed successfully. File path:', processedFilePath);
         
                         const processedFileName = path.basename(processedFilePath);
@@ -485,13 +584,14 @@ async function handleEvents(event) {
                         console.log('Uploading to Dropbox...');
                         const downloadLink = await dropboxAPI.uploadToDropbox(processedFilePath, DROPBOX_PATH);
         
+                        await logUserActivity(userId, ffmpegConfig, "Audio Sent");
+        
                         return client.replyMessage(event.replyToken, [
                             {
                                 "type": "text",
-                                "text": `✅Media processing complete! You can listen/download it here:\n${downloadLink}`
+                                "text": `✅ Media processing complete! You can listen/download it here:\n${downloadLink}`
                             }
                         ]);
-        
                     } else {
                         return client.replyMessage(event.replyToken, [
                             {
@@ -500,6 +600,7 @@ async function handleEvents(event) {
                             }
                         ]);
                     }
+        
                 } catch (error) {
                     console.error("FFmpeg processing error:", error);
                     return client.replyMessage(event.replyToken, [
@@ -512,9 +613,7 @@ async function handleEvents(event) {
             }
         }
     }
-}
-        
-
+}        
 function showData(event) {
     return client.replyMessage(event.replyToken, [
         {
