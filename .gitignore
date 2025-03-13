@@ -2,3 +2,9 @@
 node_modules/
 processed_media/
 logs/log.log
+
+download/video/*
+!download/video/.gitkeep
+
+download/audio/*
+!download/audio/.gitkeep
