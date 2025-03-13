@@ -41,14 +41,18 @@ app.post('/webhook', line.middleware(config), (req, res) => {
 
 // Link Rich Menu to a User
 async function linkRichMenu(userId) {
-    const richMenuId = "richmenu-59c99a458fb7dfe540eb53712f8ddff8"; // Replace with your Rich Menu ID
+    const richMenuId = process.env.RICH_MENU_ID; 
     const channelToken = process.env.token;
 
-    await axios.post(`https://api.line.me/v2/bot/user/${userId}/richmenu/${richMenuId}`, null, {
-        headers: {
-            "Authorization": `Bearer ${channelToken}`
+    await axios.post(
+        `https://api.line.me/v2/bot/user/${userId}/richmenu/${richMenuId}`,
+        null,
+        {
+            headers: {
+                "Authorization": `Bearer ${channelToken}`
+            }
         }
-    });
+    );
 }
 
 const client = new line.Client(config);
