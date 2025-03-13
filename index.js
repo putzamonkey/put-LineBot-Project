@@ -9,9 +9,6 @@ const fs = require('fs');
 const path = require('path');
 const { pipeline } = require('stream');
 
-// const testscript = require('./testscript');
-const validateFiles = require('./fileValidator');
-const validateFile = require('./fileTypeValidation.js');
 const { processMedia } = require('./ffmpeg.js');
 const dropboxAPI = require('./dropboxAPI.js');
 const annihilateFile = require('./fileAnnihilator.js');
@@ -253,64 +250,6 @@ async function handleEvents(event) {
             return showData(event);
         }
 
-        if (userMessage === 'fileTests') {
-            try {
-                const testCases = [
-                    './download/videogit/544193701166711011.mp4',
-                    './download/audio/544193725040164901.mp3',
-                    './download/image/544193714571182305.jpg',
-                ];
-
-                // เรียกใช้ validateFiles (ใน fileValidator)
-                const results = validateFiles(testCases);
-
-                return client.replyMessage(event.replyToken, [
-                    {
-                        type: 'text',
-                        text: results.join('\n') 
-                    }
-                ]);
-            } catch (error) {
-                console.error('Error running tests:', error);
-                return client.replyMessage(event.replyToken, [
-                    {
-                        type: 'text',
-                        text: 'An error occurred while running the tests.'
-                    }
-                ]);
-            }
-        }
-
-        if (userMessage === 'deleteTests') {
-            try {
-                const testCases = [ 
-                    './download/videogit/544193701166711011.mp4',
-                    './download/audio/544193725040164901.mp3',
-                    './download/image/544193714571182305.jpg',
-                ];
-
-                const results = testCases.map((filePath, index) => {
-                    const result = validateFile(filePath);
-                    return `Test Case ${index + 1}: ${filePath} => ${result === true ? 'Video' : result === false ? 'Audio' : 'Invalid'}`;
-                });
-
-                return client.replyMessage(event.replyToken, [
-                    {
-                        type: 'text',
-                        text: results.join('\n')
-                    }
-                ]);
-            } catch (error) {
-                console.error('Error running tests:', error);
-                return client.replyMessage(event.replyToken, [
-                    {
-                        type: 'text',
-                        text: 'An error occurred while running the tests.'
-                    }
-                ]);
-            }
-        }
-
         if (userMessage === "setNull") {
             ffmpegConfig.fps = null;
             ffmpegConfig.resolution = null;
@@ -425,8 +364,6 @@ async function handleEvents(event) {
                     "quoteToken": event.message.quoteToken
                 }
             ]) 
-        
-            const annihilateFile = require('./fileAnnihilator.js');
 
         } else if (event.message.type === 'video') {
             const userId = event.source.userId;
