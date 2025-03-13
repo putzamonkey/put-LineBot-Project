@@ -14,6 +14,7 @@ const validateFiles = require('./fileValidator');
 const validateFile = require('./fileTypeValidation.js');
 const { processMedia } = require('./ffmpeg.js');
 const dropboxAPI = require('./dropboxAPI.js');
+const annihilateFile = require('./fileAnnihilator.js');
 
 app.use('/processed_media', express.static(path.join(__dirname, 'processed_media')));
 
@@ -425,19 +426,20 @@ async function handleEvents(event) {
                 }
             ]) 
         
+            const annihilateFile = require('./fileAnnihilator.js');
+
         } else if (event.message.type === 'video') {
             const userId = event.source.userId;
             if (event.message.contentProvider.type === 'line') {
                 const dlpath = path.join(__dirname, 'download/video', `${event.message.id}.mp4`);
                 await downloadcontent(event.message.id, dlpath);
         
-                // Validate user-config vs. file type
                 try {
                     // 1) Check for user-defined or default
                     const videoOutput = (ffmpegConfig.videoOutput !== undefined && ffmpegConfig.videoOutput !== null)
                         ? ffmpegConfig.videoOutput
                         : null;
-                    
+        
                     // 2) If videoOutput is null => user must explicitly set
                     if (videoOutput === null) {
                         return client.replyMessage(event.replyToken, [
@@ -520,6 +522,9 @@ async function handleEvents(event) {
                             "text": "⚠️ An error occurred while processing the media."
                         }
                     ]);
+                } finally {
+                    // Always remove the original file from /download
+                    annihilateFile(dlpath);
                 }
             }
         
@@ -543,7 +548,7 @@ async function handleEvents(event) {
                                 "text": "⚠️ videoOutput is not set! Please set it to 'false' before uploading an audio file."
                             }
                         ]);
-                    } 
+                    }
                     if (videoOutput === true) {
                         return client.replyMessage(event.replyToken, [
                             {
@@ -613,6 +618,9 @@ async function handleEvents(event) {
                             "text": "⚠️ An error occurred while processing the media."
                         }
                     ]);
+                } finally {
+                    // Always remove the original file from /download
+                    annihilateFile(dlpath);
                 }
             }
         }
