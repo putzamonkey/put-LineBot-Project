@@ -2,4 +2,4 @@ download/
 .env
 node_modules/
 processed_media/
-logs/
+logs/log.log

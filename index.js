@@ -41,7 +41,7 @@ app.post('/webhook', line.middleware(config), (req, res) => {
 
 // Link Rich Menu to a User
 async function linkRichMenu(userId) {
-    const richMenuId = "richmenu-368a46973a1c08471a882d63280faede"; // Replace with your Rich Menu ID
+    const richMenuId = "richmenu-59c99a458fb7dfe540eb53712f8ddff8"; // Replace with your Rich Menu ID
     const channelToken = process.env.token;
 
     await axios.post(`https://api.line.me/v2/bot/user/${userId}/richmenu/${richMenuId}`, null, {
