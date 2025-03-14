@@ -232,7 +232,10 @@ async function handleEvents(event) {
                 ffmpegConfig.videoOutput = null;
                 return showData(event);
             }
-            if (userMessage.toLowerCase().startsWith("help") || userMessage.toLowerCase().startsWith("h")) {
+            if (
+                userMessage.trim().toLowerCase() === "help" ||
+                userMessage.trim().toLowerCase() === "h"
+              ) {
                 // Send help instructions
                 const helpText = 
 `Here’s how to use our Bot:
