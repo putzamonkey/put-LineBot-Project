@@ -60,15 +60,13 @@ app.post('/ngrok/stop', (req, res) => {
 
 // ✅ Fetch logs from log file
 app.get('/logs', (req, res) => {
-    const logFilePath = path.join(__dirname, 'logs', 'log.log');
-
-    fs.access(logFilePath, fs.constants.F_OK, (err) => {
+    fs.access(LOG_FILE, fs.constants.F_OK, (err) => {
         if (err) {
             console.error("Log file not found:", err);
             return res.status(404).send("Log file not found.");
         }
 
-        fs.readFile(logFilePath, 'utf8', (err, data) => {
+        fs.readFile(LOG_FILE, 'utf8', (err, data) => {
             if (err) {
                 console.error("Error reading log file:", err);
                 return res.status(500).send("Error reading log file.");
@@ -78,11 +76,14 @@ app.get('/logs', (req, res) => {
     });
 });
 
+// ✅ WebSocket setup for PM2 logs
 const wssOutput = new WebSocket.Server({ port: 3002 });
+let logStream = null;
 
-// Function to send PM2 logs to connected clients
-function streamPM2Logs() {
-    const logStream = exec('pm2 logs linebot --lines 20');
+function startPM2LogStream() {
+    if (logStream) return; // Prevent multiple instances
+
+    logStream = exec('pm2 logs linebot --lines 20');
 
     logStream.stdout.on('data', (data) => {
         wssOutput.clients.forEach(client => {
@@ -95,11 +96,19 @@ function streamPM2Logs() {
     logStream.stderr.on('data', (data) => {
         console.error("Error streaming PM2 logs:", data);
     });
+
+    logStream.on('close', () => {
+        logStream = null; // Reset logStream when it stops
+    });
 }
 
 wssOutput.on('connection', (ws) => {
     console.log("New WebSocket connection for PM2 logs");
-    streamPM2Logs();
+    startPM2LogStream(); // Ensure only one stream is running
+
+    ws.on('close', () => {
+        console.log("WebSocket client disconnected");
+    });
 });
 
 // ✅ Check if the bot is running
@@ -124,7 +133,6 @@ app.get('/ngrok/status', (req, res) => {
 
 // ✅ Clear PM2 logs
 app.post('/terminal/clear', (req, res) => {
-    const { exec } = require('child_process');
     exec('pm2 flush', (err, stdout, stderr) => {
         if (err) {
             console.error("Error clearing terminal logs:", stderr);
@@ -136,7 +144,7 @@ app.post('/terminal/clear', (req, res) => {
 
 // ✅ Clear log file
 app.post('/logs/clear', (req, res) => {
-    fs.writeFile('logs/log.log', '', (err) => {
+    fs.writeFile(LOG_FILE, '', (err) => {
         if (err) {
             console.error("Error clearing log file:", err);
             return res.status(500).send("Failed to clear log file.");
