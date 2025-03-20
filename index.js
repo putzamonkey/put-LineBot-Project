@@ -348,15 +348,15 @@ After setting everything, just upload your file and the bot will process it!`;
                         const DROPBOX_PATH = `/user_processed_file/${processedSubfolder}/${processedFileName}`;
 
                         console.log('Uploading to Dropbox...');
-                        const downloadLink = await dropboxAPI.uploadToDropbox(processedFilePath, DROPBOX_PATH);
+                        const { downloadLink, fileSize } = await dropboxAPI.uploadToDropbox(processedFilePath, DROPBOX_PATH);
 
                         await logUserActivity(userId, ffmpegConfig, "Video Sent");
 
                         return client.replyMessage(event.replyToken, [
-                            {
-                                "type": "text",
-                                "text": `✅ Media processing complete! You can watch/download it here:\n${downloadLink}`
-                            }
+                        {
+                            "type": "text",
+                            "text": `✅ Media processing complete!\n📂 File Size: ${(fileSize / (1024 * 1024)).toFixed(2)} MB\n🔗 Download: ${downloadLink}`
+                        }
                         ]);
                     } else {
                         return client.replyMessage(event.replyToken, [
@@ -437,16 +437,16 @@ After setting everything, just upload your file and the bot will process it!`;
                         const DROPBOX_PATH = `/user_processed_file/${processedSubfolder}/${processedFileName}`;
 
                         console.log('Uploading to Dropbox...');
-                        const downloadLink = await dropboxAPI.uploadToDropbox(processedFilePath, DROPBOX_PATH);
+                        const { downloadLink, fileSize } = await dropboxAPI.uploadToDropbox(processedFilePath, DROPBOX_PATH);
 
-                        await logUserActivity(userId, ffmpegConfig, "Audio Sent");
-
+                        await logUserActivity(userId, ffmpegConfig, "Video Sent");
+                        
                         return client.replyMessage(event.replyToken, [
-                            {
-                                "type": "text",
-                                "text": `✅ Media processing complete! You can listen/download it here:\n${downloadLink}`
-                            }
-                        ]);
+                          {
+                            "type": "text",
+                            "text": `✅ Media processing complete!\n📂 File Size: ${(fileSize / (1024 * 1024)).toFixed(2)} MB\n🔗 Download: ${downloadLink}`
+                          }
+                        ]);                        
                     } else {
                         return client.replyMessage(event.replyToken, [
                             {

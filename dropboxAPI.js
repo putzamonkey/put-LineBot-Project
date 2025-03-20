@@ -1,6 +1,7 @@
 const Dropbox = require('dropbox').Dropbox;
 const fetch = require('node-fetch');
 const path = require('path');
+const annihilateFile = require('./fileAnnihilator'); // Import file annihilator
 require('dotenv').config();
 
 const APP_KEY = process.env.DROPBOX_APP_KEY;
@@ -38,12 +39,10 @@ async function getAccessToken() {
 
 const dropboxAPI = {
   async uploadToDropbox(filePath, dropboxPath) {
-    const accessToken = await getAccessToken(); // Get a fresh token before uploading
-
+    const accessToken = await getAccessToken();
     const dbx = new Dropbox({ accessToken, fetch });
 
     try {
-      // Normalize file paths for cross-platform compatibility
       filePath = path.normalize(filePath).replace(/\\/g, "/");
       dropboxPath = path.normalize(dropboxPath).replace(/\\/g, "/");
 
@@ -99,24 +98,34 @@ const dropboxAPI = {
 
       console.log("[DropboxAPI] File uploaded successfully:", uploadResponse);
 
+      // Get file metadata (size)
+      const metadataResponse = await dbx.filesGetMetadata({ path: dropboxPath });
+      const fileSize = metadataResponse.result.size; // File size in bytes
+
       // Get a temporary download link
       const linkResponse = await dbx.filesGetTemporaryLink({ path: dropboxPath });
-
-      console.log("[DropboxAPI] Temporary link response:", linkResponse);
-
       const temporaryDownloadLink = linkResponse.result?.link;
+
       if (!temporaryDownloadLink) {
         throw new Error("No temporary link returned in response.");
       }
 
+      console.log("[DropboxAPI] File size:", fileSize, "bytes");
       console.log("[DropboxAPI] Temporary download link:", temporaryDownloadLink);
 
-      return temporaryDownloadLink;
+      // **Annihilate the file after successful upload**
+      console.log("[DropboxAPI] Annihilating local file:", filePath);
+      annihilateFile(filePath);
+
+      return {
+        downloadLink: temporaryDownloadLink,
+        fileSize: fileSize
+      };
     } catch (error) {
       console.error("[DropboxAPI] Error uploading to Dropbox or generating download link:", error);
       throw error;
     }
-  },
+  }
 };
 
 module.exports = dropboxAPI;

@@ -6,11 +6,11 @@ const path = require('path');
   // Example user input for media processing
   const userInput = {
     inputPath: "./download/video.mp4",    // Must exist
-    videoOutput: true,                   // true for video output, false for audio output
-    resolution: "0.1",                       // Can be left empty if videoOutput = false
-    fps: "0",                              // FPS setting
-    quality: "high",                      // 'low', 'standard', or 'high'
-    outputFormat: ".mp4",                 // Output format
+    videoOutput: false,                   // true for video output, false for audio output
+    resolution: "1",                    // Can be left empty if videoOutput = false
+    fps: "30",                             // FPS setting
+    quality: "low",                      // 'low', 'standard', or 'high'
+    outputFormat: ".mp3",                 // Output format
   };
 
   try {
@@ -23,21 +23,24 @@ const path = require('path');
       console.log('Media processed successfully. File path:', result.processedFilePath);
 
       // Extract filename and subfolder for Dropbox path
-      const processedFileName = path.basename(result.processedFilePath); // Extracts just the filename
-      const processedSubfolder = path.dirname(result.processedFilePath).split(path.sep).pop(); // Extracts subfolder name
+      const processedFileName = path.basename(result.processedFilePath);
+      const processedSubfolder = path.dirname(result.processedFilePath).split(path.sep).pop();
 
       const DROPBOX_PATH = `/user_processed_file/${processedSubfolder}/${processedFileName}`;
 
-      // Step 3: Upload the processed file to Dropbox
+      // Step 3: Upload the processed file to Dropbox and get its metadata
       console.log('Uploading to Dropbox...');
-      const downloadLink = await dropboxAPI.uploadToDropbox(result.processedFilePath, DROPBOX_PATH);
+      const { downloadLink, fileSize } = await dropboxAPI.uploadToDropbox(result.processedFilePath, DROPBOX_PATH);
 
-      // Step 4: Output the download link
-      console.log('testDropboxIntegrations download link:', downloadLink);
+      // Step 4: Log the download link and file size
+      console.log('✅ File uploaded successfully!');
+      console.log('🔗 Download link:', downloadLink);
+      console.log(`📂 File size: ${(fileSize / (1024 * 1024)).toFixed(2)} MB`);
+
     } else {
-      console.error('Media processing failed:', result.error);
+      console.error('❌ Media processing failed:', result.error);
     }
   } catch (error) {
-    console.error('An error occurred:', error);
+    console.error('❌ An error occurred:', error);
   }
 })();
