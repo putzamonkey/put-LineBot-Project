@@ -58,24 +58,24 @@ useHead({
 const startBot = async () => {
   await fetch("http://localhost:3001/bot/start", { method: "POST" });
   alert("Bot started");
-  location.reload();
+  // location.reload();
 };
 
 const stopBot = async () => {
   await fetch("http://localhost:3001/bot/stop", { method: "POST" });
   alert("Bot stopped");
-  location.reload();
+  // location.reload();
 };
 
 const startNgrok = async () => {
   await fetch("http://localhost:3001/ngrok/start", { method: "POST" });
   alert("Ngrok started");
-  location.reload();
+  // location.reload();
 };
 
 const stopNgrok = async () => {
   await fetch("http://localhost:3001/ngrok/stop", { method: "POST" });
   alert("Ngrok stopped");
-  location.reload();
+  // location.reload();
 };
 </script>
